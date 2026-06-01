@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: locksmith_docs_postgres
+    environment:
+      POSTGRES_DB: locksmith_docs
+      POSTGRES_USER: locksmith
+      POSTGRES_PASSWORD: locksmith_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - locksmith_pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U locksmith -d locksmith_docs"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://locksmith:locksmith_dev@postgres:5432/locksmith_docs
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./storage:/app/storage
+      - ./data:/app/data
+      - ./static/assets:/app/static/assets
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  locksmith_pgdata:

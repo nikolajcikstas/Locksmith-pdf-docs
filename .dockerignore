@@ -1,0 +1,12 @@
+.git
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pdf
+data/
+storage/
+static/assets/
+*.png
+*.jpg
+*.jpeg
