@@ -128,6 +128,103 @@ def parse_year(value: str | None) -> int | None:
         return None
 
 
+def shopify_report_page_url(report_id: str) -> str:
+    return f"/pages/key-report?report={quote_plus((report_id or '').lower())}"
+
+
+def absolutize_static_urls(html: str, base_url: str) -> str:
+    base = base_url.rstrip("/")
+    return html.replace('src="/static/', f'src="{base}/static/').replace('href="/static/', f'href="{base}/static/')
+
+
+def build_report_preview_payload(vehicle: dict, system: dict, *, year: int | None = None) -> dict:
+    code = vehicle["system_code"]
+    essentials = system.get("job_essentials") or {}
+    quick_answer_raw = system.get("quick_answer") or []
+    mechanical = system.get("mechanical_key") or {}
+    key_remote = system.get("key_remote") or {}
+    programming = system.get("programming") or {}
+    decoders_raw = system.get("decoders") or []
+
+    at_a_glance: list[dict] = []
+
+    def _add(label: str, value) -> None:
+        v = str(value or "").strip()
+        if v and v not in {"-", "n/a", "N/A", "None"}:
+            at_a_glance.append({"label": label, "value": v})
+
+    pin = programming.get("pin_required") or essentials.get("pin_required") or essentials.get("PIN")
+    _add("PIN", "Required" if str(pin or "").lower() in {"yes", "required"} else pin)
+
+    freq = essentials.get("frequency") or essentials.get("Frequency")
+    if not freq and isinstance(key_remote.get("known_options"), list):
+        for opt in key_remote["known_options"]:
+            if isinstance(opt, dict) and opt.get("frequency"):
+                freq = opt["frequency"]
+                break
+    _add("Frequency", freq)
+    _add("Code series", mechanical.get("code_series") or essentials.get("code_series"))
+
+    lishi_tools = [
+        d.get("tool") or d.get("name") or ""
+        for d in (decoders_raw if isinstance(decoders_raw, list) else [])
+        if isinstance(d, dict) and "lishi" in str(d.get("tool", "") + str(d.get("name", ""))).lower()
+    ]
+    _add("Lishi / decoder", lishi_tools[0] if lishi_tools else essentials.get("lishi") or essentials.get("decoder"))
+
+    prog_path = (
+        programming.get("programming_path")
+        or programming.get("method")
+        or essentials.get("programming_path")
+    )
+    if not prog_path and programming.get("tools"):
+        tools = programming["tools"]
+        if isinstance(tools, list) and tools:
+            first = tools[0]
+            prog_path = first.get("name") or str(first)
+    _add("Programming path", prog_path)
+
+    covered_keys = {"pin_required", "pin", "frequency", "code_series", "lishi", "decoder", "programming_path", "summary"}
+    for k, v in essentials.items():
+        if k.lower() not in covered_keys and isinstance(v, str) and v.strip():
+            at_a_glance.append({"label": k.replace("_", " ").title(), "value": v.strip()})
+
+    quick_answer: list[str] = []
+    for item in (quick_answer_raw if isinstance(quick_answer_raw, list) else []):
+        if isinstance(item, str):
+            quick_answer.append(item)
+        elif isinstance(item, dict):
+            text = item.get("text") or item.get("answer") or item.get("detail") or ""
+            if text:
+                quick_answer.append(str(text))
+
+    intro = str(essentials.get("summary") or essentials.get("intro") or "").strip()
+    if not intro and quick_answer:
+        intro = " ".join(quick_answer[:2])
+
+    display_vehicle = dict(vehicle)
+    if year is not None:
+        display_vehicle["requested_year"] = year
+
+    return {
+        "found": True,
+        "report_id": code.lower(),
+        "title": vehicle_display_title(display_vehicle) or f"{vehicle.get('year_from')}-{vehicle.get('year_to')} {vehicle.get('make')} {vehicle.get('model')}",
+        "subtitle": f"System {code} · {system.get('system_type') or ''}".rstrip(" ·"),
+        "intro": intro,
+        "at_a_glance": at_a_glance,
+        "quick_answer": quick_answer,
+        "report_url": shopify_report_page_url(code.lower()),
+        "vehicle": {
+            "make": vehicle["make"],
+            "model": vehicle["model"],
+            "year_from": vehicle["year_from"],
+            "year_to": vehicle["year_to"],
+            "system_code": code,
+        },
+    }
+
+
 def render_markdown_light(text: str) -> str:
     paragraphs = [part.strip() for part in text.split("\n\n") if part.strip()]
     return "".join(f"<p>{esc(paragraph)}</p>" for paragraph in paragraphs)
@@ -364,18 +461,25 @@ def report_preview_api(
     make: str = "",
     model: str = "",
     year: int | None = Query(default=None),
+    report: str = "",
 ):
-    """Return a structured JSON preview of a key report for a given vehicle.
+    """Return a structured JSON preview of a key report for a given vehicle or report id."""
+    repo = LocksmithRepository()
+    report_code = clean_param(report).upper()
+    if report_code:
+        vehicle = repo.find_vehicle_for_system(report_code)
+        if not vehicle:
+            return JSONResponse({"found": False}, status_code=404)
+        system = repo.get_published_or_draft_system(report_code)
+        if not system:
+            return JSONResponse({"found": False}, status_code=404)
+        return JSONResponse(build_report_preview_payload(vehicle, system))
 
-    Used by the Shopify storefront to render the free preview on the search
-    results page. The full report remains on the Python app's own URL.
-    """
     make_c = clean_param(make)
     model_c = clean_param(model)
     if not (make_c and model_c and year is not None):
         return JSONResponse({"found": False, "error": "make, model and year are required"}, status_code=400)
 
-    repo = LocksmithRepository()
     query = VehicleQuery(make=make_c, model=model_c, year=year)
     vehicle = repo.find_vehicle_best_effort(query)
     if not vehicle:
@@ -385,98 +489,33 @@ def report_preview_api(
     if not system:
         return JSONResponse({"found": False}, status_code=404)
 
-    code = vehicle["system_code"]
-    essentials = system.get("job_essentials") or {}
-    quick_answer_raw = system.get("quick_answer") or []
-    mechanical = system.get("mechanical_key") or {}
-    key_remote = system.get("key_remote") or {}
-    programming = system.get("programming") or {}
-    decoders_raw = system.get("decoders") or []
+    return JSONResponse(build_report_preview_payload(vehicle, system, year=year))
 
-    # Build at_a_glance from structured fields
-    at_a_glance: list[dict] = []
 
-    def _add(label: str, value) -> None:
-        v = str(value or "").strip()
-        if v and v not in {"-", "n/a", "N/A", "None"}:
-            at_a_glance.append({"label": label, "value": v})
+@app.get("/api/report/full")
+def report_full_api(request: Request, report: str = ""):
+    """Return full report HTML for Shopify (access is gated on the storefront)."""
+    code = clean_param(report).upper()
+    if not code:
+        return JSONResponse({"found": False, "error": "report is required"}, status_code=400)
 
-    # PIN
-    pin = programming.get("pin_required") or essentials.get("pin_required") or essentials.get("PIN")
-    _add("PIN", "Required" if str(pin or "").lower() in {"yes", "required"} else pin)
+    repo = LocksmithRepository()
+    vehicle = repo.find_vehicle_for_system(code)
+    if not vehicle:
+        return JSONResponse({"found": False}, status_code=404)
 
-    # Frequency — from known_options or essentials
-    freq = essentials.get("frequency") or essentials.get("Frequency")
-    if not freq and isinstance(key_remote.get("known_options"), list):
-        for opt in key_remote["known_options"]:
-            if isinstance(opt, dict) and opt.get("frequency"):
-                freq = opt["frequency"]
-                break
-    _add("Frequency", freq)
+    system = repo.get_published_or_draft_system(code)
+    if not system:
+        return JSONResponse({"found": False}, status_code=404)
 
-    # Code series
-    _add("Code series", mechanical.get("code_series") or essentials.get("code_series"))
-
-    # Lishi / decoder tool
-    lishi_tools = [
-        d.get("tool") or d.get("name") or ""
-        for d in (decoders_raw if isinstance(decoders_raw, list) else [])
-        if isinstance(d, dict) and "lishi" in str(d.get("tool", "") + str(d.get("name", ""))).lower()
-    ]
-    _add("Lishi / decoder", lishi_tools[0] if lishi_tools else essentials.get("lishi") or essentials.get("decoder"))
-
-    # Programming path summary
-    prog_path = (
-        programming.get("programming_path")
-        or programming.get("method")
-        or essentials.get("programming_path")
-    )
-    if not prog_path and programming.get("tools"):
-        tools = programming["tools"]
-        if isinstance(tools, list) and tools:
-            first = tools[0]
-            prog_path = first.get("name") or str(first)
-    _add("Programming path", prog_path)
-
-    # If job_essentials has extra kv fields not already covered, append them
-    covered_keys = {"pin_required", "pin", "frequency", "code_series", "lishi", "decoder", "programming_path", "summary"}
-    for k, v in essentials.items():
-        if k.lower() not in covered_keys and isinstance(v, str) and v.strip():
-            at_a_glance.append({"label": k.replace("_", " ").title(), "value": v.strip()})
-
-    # Quick answer: can be list of strings or list of dicts
-    quick_answer: list[str] = []
-    for item in (quick_answer_raw if isinstance(quick_answer_raw, list) else []):
-        if isinstance(item, str):
-            quick_answer.append(item)
-        elif isinstance(item, dict):
-            text = item.get("text") or item.get("answer") or item.get("detail") or ""
-            if text:
-                quick_answer.append(str(text))
-
-    # Intro — first paragraph from job_essentials.summary, or concatenate quick_answer
-    intro = str(essentials.get("summary") or essentials.get("intro") or "").strip()
-    if not intro and quick_answer:
-        intro = " ".join(quick_answer[:2])
-
-    full_report_url = f"/?make={quote_plus(make_c)}&model={quote_plus(model_c)}&year={year}"
-
+    assets = repo.list_assets_for_system(code)
+    html = render_vehicle_report(vehicle, system, assets)
+    base = str(request.base_url).rstrip("/")
     return JSONResponse({
         "found": True,
         "report_id": code.lower(),
-        "title": vehicle_display_title({**vehicle, "requested_year": year}) or f"{year} {make_c.title()} {model_c.upper()}",
-        "subtitle": f"System {code} · {system.get('system_type') or ''}".rstrip(" ·"),
-        "intro": intro,
-        "at_a_glance": at_a_glance,
-        "quick_answer": quick_answer,
-        "report_url": full_report_url,
-        "vehicle": {
-            "make": vehicle["make"],
-            "model": vehicle["model"],
-            "year_from": vehicle["year_from"],
-            "year_to": vehicle["year_to"],
-            "system_code": code,
-        },
+        "title": vehicle_display_title(vehicle),
+        "html": absolutize_static_urls(html, base),
     })
 
 

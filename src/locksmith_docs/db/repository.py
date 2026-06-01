@@ -209,6 +209,22 @@ class LocksmithRepository:
                 return row
         return None
 
+    def find_vehicle_for_system(self, system_code: str) -> dict[str, Any] | None:
+        clean_code = (system_code or "").strip().upper()
+        if not clean_code or clean_code == "UNMATCHED":
+            return None
+        with get_connection() as conn:
+            return conn.execute(
+                """
+                SELECT *
+                FROM vehicle_applications
+                WHERE system_code = %s
+                ORDER BY year_from ASC, year_to DESC
+                LIMIT 1
+                """,
+                (clean_code,),
+            ).fetchone()
+
     def get_system(self, system_code: str) -> dict[str, Any] | None:
         with get_connection() as conn:
             return conn.execute(
