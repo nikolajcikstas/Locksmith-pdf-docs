@@ -383,6 +383,9 @@ def enrich_draft_with_targeted_ocr(draft: dict[str, Any], source_images: list[Pa
     key = re.search(r"\bTest\s*key\s*is\s*(?P<key>[A-Z0-9-]{2,12})\b", chip_text, re.IGNORECASE)
     if key and not transponder.get("test_key"):
         transponder["test_key"] = key.group("key").upper()
+    cloner_tools = _extract_cloner_tools(detail_page, pytesseract)
+    if cloner_tools and not transponder.get("cloner_tools"):
+        transponder["cloner_tools"] = cloner_tools
     enriched = deepcopy(draft)
     if transponder:
         enriched["transponder"] = transponder
@@ -392,9 +395,14 @@ def enrich_draft_with_targeted_ocr(draft: dict[str, Any], source_images: list[Pa
         pytesseract,
     )
     mechanical = deepcopy(enriched.get("mechanical_key") if isinstance(enriched.get("mechanical_key"), dict) else {})
+    spec_cells = _extract_specification_cells(mechanical_page, pytesseract)
     spacing = _extract_ocr_spacing_table(table_text)
     depths = _extract_ocr_depth_table(table_text)
-    fixed_spacing, fixed_depths = _extract_fixed_mechanical_cells(mechanical_page, pytesseract)
+    fixed_spacing, fixed_depths = _extract_fixed_mechanical_cells(
+        mechanical_page,
+        pytesseract,
+        cut_to_cut=spec_cells.get("cut_to_cut", ""),
+    )
     if len(fixed_spacing) >= 8:
         spacing = fixed_spacing
     if len(fixed_depths) >= 4:
@@ -405,7 +413,7 @@ def enrich_draft_with_targeted_ocr(draft: dict[str, Any], source_images: list[Pa
         mechanical["depths"] = depths
     mechanical.update({
         key: value
-        for key, value in _extract_specification_cells(mechanical_page, pytesseract).items()
+        for key, value in spec_cells.items()
         if value and not mechanical.get(key)
     })
     if mechanical:
@@ -424,11 +432,16 @@ def targeted_ocr_debug(source_images: list[Path]) -> dict[str, Any]:
         detail_page = Image.open(source_images[1]).convert("L")
     except (ImportError, OSError) as exc:
         return {"error": str(exc)}
-    spacing, depths = _extract_fixed_mechanical_cells(mechanical_page, pytesseract)
+    spec_cells = _extract_specification_cells(mechanical_page, pytesseract)
+    spacing, depths = _extract_fixed_mechanical_cells(
+        mechanical_page,
+        pytesseract,
+        cut_to_cut=spec_cells.get("cut_to_cut", ""),
+    )
     sample = _extract_transponder_cells({"transponder": {}}, detail_page, pytesseract)
     return {
         "source_images": [str(path) for path in source_images[:2]],
-        "specification_cells": _extract_specification_cells(mechanical_page, pytesseract),
+        "specification_cells": spec_cells,
         "fixed_spacing": spacing,
         "fixed_depths": depths,
         "transponder_cells": sample.get("transponder", {}),
@@ -470,7 +483,11 @@ def _extract_ocr_depth_table(text: str) -> dict[str, str]:
     return depths
 
 
-def _extract_fixed_mechanical_cells(image: Image.Image, pytesseract: Any) -> tuple[dict[str, str], dict[str, str]]:
+def _extract_fixed_mechanical_cells(
+    image: Image.Image,
+    pytesseract: Any,
+    cut_to_cut: str = "",
+) -> tuple[dict[str, str], dict[str, str]]:
     """Read spacing/depth cells from the repeated AutoSmart technical sheet layout."""
     width, height = image.size
     spacing: dict[str, str] = {}
@@ -495,6 +512,13 @@ def _extract_fixed_mechanical_cells(image: Image.Image, pytesseract: Any) -> tup
             value = _ocr_decimal_cell(crop, pytesseract)
             if value:
                 spacing[str(position + 1)] = value
+    if not _is_descending_cut_table(spacing, 8):
+        spacing_region = image.crop((int(width * 0.035), int(height * 0.515), int(width * 0.585), int(height * 0.665)))
+        spacing = _derive_spacing_from_anchors(
+            _ocr_decimal_texts(spacing_row, pytesseract, scale=6)
+            + [_ocr_detail_region(spacing_region, pytesseract)],
+            cut_to_cut,
+        )
     depths: dict[str, str] = {}
     depth_block = image.crop((int(width * 0.600), int(height * 0.540), int(width * 0.720), int(height * 0.660)))
     depth_values = _ocr_decimal_values(depth_block, pytesseract)
@@ -513,6 +537,38 @@ def _extract_fixed_mechanical_cells(image: Image.Image, pytesseract: Any) -> tup
     if not _is_descending_cut_table(depths, 4):
         depths = {}
     return spacing, depths
+
+
+def _derive_spacing_from_anchors(texts: list[str], cut_to_cut: str) -> dict[str, str]:
+    """Rebuild an evenly spaced table when OCR sees anchors but misses cells."""
+    cut_match = re.search(r"[.]?\s*(\d{3})\b", cut_to_cut or "")
+    if not cut_match:
+        return {}
+    step = int(cut_match.group(1)) / 1000
+    if step <= 0 or step > 0.250:
+        return {}
+    anchors: set[float] = set()
+    combined = "\n".join(texts)
+    for match in re.finditer(r"(?<!\d)[.]?\s*(\d{3})(?!\d)", combined):
+        value = int(match.group(1)) / 1000
+        if 0.150 <= value <= 1.200 and abs(value - step) > 0.004:
+            anchors.add(round(value, 3))
+    for first in sorted(anchors, reverse=True):
+        row = [round(first - step * index, 3) for index in range(8)]
+        if min(row) <= 0:
+            continue
+        matched = sum(
+            1
+            for value in row
+            if any(abs(anchor - value) <= 0.004 for anchor in anchors)
+        )
+        if matched >= 3 and all(row[index] > row[index + 1] for index in range(7)):
+            return {str(index + 1): _format_decimal_value(value) for index, value in enumerate(row)}
+    return {}
+
+
+def _format_decimal_value(value: float) -> str:
+    return f".{int(round(value * 1000)):03d}"
 
 
 def _extract_specification_cells(image: Image.Image, pytesseract: Any) -> dict[str, str]:
@@ -566,6 +622,26 @@ def _extract_specification_cells(image: Image.Image, pytesseract: Any) -> dict[s
             match = re.search(r"\b(None|Spring|Clip|Pin|Ring|N/?A)\b", compact, re.IGNORECASE)
             if match:
                 extracted[key] = match.group(1)
+    row_text = _ocr_detail_region(
+        image.crop((int(width * 0.130), int(height * 0.110), int(width * 0.930), int(height * 0.250))),
+        pytesseract,
+    )
+    row_compact = " ".join(row_text.split())
+    row_match = re.search(
+        r"\b(?P<card>[A-Z]{1,4}\d{2,5})\s+(?P<itl>\d{1,4})\s+"
+        r"(?P<macs>[1-9]|1[0-2])\s+(?P<start>\d{3})\s+(?P<cut>\d{3})\s+"
+        r"(?P<air>Yes|No|N/?A)\s+(?P<retainer>None|Spring|Clip|Pin|Ring|N/?A)\b",
+        row_compact,
+        re.IGNORECASE,
+    )
+    if row_match:
+        extracted.setdefault("card", row_match.group("card").upper())
+        extracted.setdefault("itl", row_match.group("itl"))
+        extracted.setdefault("macs", row_match.group("macs"))
+        extracted.setdefault("start_cut", "." + row_match.group("start"))
+        extracted.setdefault("cut_to_cut", "." + row_match.group("cut"))
+        extracted.setdefault("air_bags", row_match.group("air").title())
+        extracted.setdefault("ignition_retainer", row_match.group("retainer").title())
     return extracted
 
 
@@ -636,7 +712,45 @@ def _extract_transponder_cells(draft: dict[str, Any], image: Image.Image, pytess
             if reusable.group(2):
                 value += f" ({' '.join(reusable.group(2).split())})"
             transponder["reusable"] = value
+        if not transponder.get("cloner_tools"):
+            cloner_tools = _extract_cloner_tools(image, pytesseract)
+            if cloner_tools:
+                transponder["cloner_tools"] = cloner_tools
     return enriched
+
+
+def _extract_cloner_tools(image: Image.Image, pytesseract: Any) -> list[dict[str, str]]:
+    """Read the common cloner-machine table as structured rows."""
+    width, height = image.size
+    text = _ocr_detail_region(
+        image.crop((int(width * 0.03), int(height * 0.02), int(width * 0.98), int(height * 0.36))),
+        pytesseract,
+    )
+    upper = text.upper()
+    if "CLONER" not in upper or not any(token in upper for token in ("RW4", "CN900", "TANGO", "MINI TOOL", "MIRACLONE")):
+        return []
+    note = ""
+    if re.search(r"PHILIPS\s+CRYPTO\s+UPDATE", upper):
+        note = "Yes; requires Philips Crypto update where noted"
+    elif re.search(r"TEXAS\s+CRYPTO\s+UPDATE", upper):
+        note = "Yes; requires crypto update where noted"
+    else:
+        note = "Listed as supported in the source cloner table"
+    candidates = [
+        ("Diag Box", "Clone Wizard", (r"DIAG\s*BOX", r"WIZARD")),
+        ("China", "CN900", (r"CN\s*900|N900",)),
+        ("ILCO / Silca", "RW4", (r"ILCO\s*/\s*SILCA", r"\bRW\s*4\b|RW4")),
+        ("JMA USA", "TRS-5000 / EVO", (r"TRS\s*[-]?\s*5?000\s*/?\s*EVO|TRS",)),
+        ("Keyline", "884 Ultegra", (r"884\s+ULTEGRA|ULTEGRA",)),
+        ("L.D.", "Miraclone", (r"MIRACLONE",)),
+        ("Scorpio", "Tango", (r"TANGO",)),
+        ("VVDI", "Mini Tool", (r"VVDI|MINI\s+TOOL",)),
+    ]
+    rows: list[dict[str, str]] = []
+    for name, model, patterns in candidates:
+        if any(re.search(pattern, upper) for pattern in patterns):
+            rows.append({"name": name, "model": model, "status": note})
+    return rows
 
 
 def merge_targeted_ocr_fields(draft: dict[str, Any], mechanical_text: str, detail_text: str) -> dict[str, Any]:

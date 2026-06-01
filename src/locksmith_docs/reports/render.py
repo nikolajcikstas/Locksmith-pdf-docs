@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from pathlib import Path
 import re
 from typing import Any
 
+from locksmith_docs.media.extract_assets import render_original_diagram_svg
 from locksmith_docs.web.rendering import esc
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 def render_list(items: Sequence[Any]) -> str:
@@ -140,10 +145,16 @@ def render_asset_cards(assets: Sequence[Mapping[str, Any]], placement: str) -> s
             continue
         if (asset.get("placement") or "") != placement:
             continue
+        embedded_svg = inline_svg_from_public_path(str(asset.get("public_path") or ""))
+        visual = (
+            f'<div class="diagram-frame">{embedded_svg}</div>'
+            if embedded_svg
+            else f'<img src="{esc(asset.get("public_path", ""))}" alt="{esc(asset.get("title", "Procedure image"))}">'
+        )
         cards.append(
             f"""
             <figure class="asset-card inline-asset">
-              <img src="{esc(asset.get('public_path', ''))}" alt="{esc(asset.get('title', 'Procedure image'))}">
+              {visual}
               <figcaption>{esc(asset.get('rewritten_caption') or asset.get('title', 'Procedure image'))}</figcaption>
             </figure>
             """
@@ -151,6 +162,20 @@ def render_asset_cards(assets: Sequence[Mapping[str, Any]], placement: str) -> s
     if not cards:
         return ""
     return f'<div class="asset-strip">{"".join(cards)}</div>'
+
+
+def inline_svg_from_public_path(public_path: str) -> str:
+    """Embed local generated SVGs directly in the report page."""
+    if not public_path.startswith("/static/") or not public_path.endswith(".svg"):
+        return ""
+    svg_path = PROJECT_ROOT / public_path.lstrip("/")
+    try:
+        svg = svg_path.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    if "<svg" not in svg[:200].lower() or "</svg>" not in svg.lower():
+        return ""
+    return svg
 
 
 def safe_lock_part_records(records: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
@@ -171,10 +196,47 @@ def render_assets(assets: Sequence[Mapping[str, Any]]) -> str:
     return ""
 
 
+def render_procedure_diagrams(system: Mapping[str, Any], placement: str) -> str:
+    diagrams = system.get("procedure_diagrams")
+    if not isinstance(diagrams, Sequence) or isinstance(diagrams, (str, bytes)):
+        return ""
+    cards = []
+    for diagram in diagrams:
+        if not isinstance(diagram, Mapping):
+            continue
+        if str(diagram.get("placement") or "") != placement:
+            continue
+        svg = render_original_diagram_svg(dict(diagram))
+        caption = str(diagram.get("caption") or diagram.get("title") or "Procedure reference").strip()
+        cards.append(
+            f"""
+            <figure class="asset-card inline-asset inline-diagram">
+              <div class="diagram-frame">{svg}</div>
+              <figcaption>{esc(caption)}</figcaption>
+            </figure>
+            """
+        )
+    if not cards:
+        return ""
+    return f'<div class="asset-strip diagram-strip">{"".join(cards)}</div>'
+
+
 def panel(title: str, content: str, extra_class: str = "") -> str:
     if not content.strip():
         return ""
     return f'<article class="panel report-section {extra_class}"><h3>{esc(title)}</h3>{content}</article>'
+
+
+def vehicle_display_title(vehicle: Mapping[str, Any]) -> str:
+    requested_year = vehicle.get("requested_year") or vehicle.get("display_year")
+    year_from = vehicle.get("year_from")
+    year_to = vehicle.get("year_to")
+    years = str(requested_year) if requested_year else str(year_from) if year_from == year_to else f"{year_from}-{year_to}"
+    return " ".join(
+        str(part).strip()
+        for part in (years, vehicle.get("make"), vehicle.get("model"))
+        if str(part).strip() and str(part).strip().lower() != "none"
+    )
 
 
 def render_vehicle_report(vehicle: Mapping[str, Any], system: Mapping[str, Any], assets: Sequence[Mapping[str, Any]] | None = None) -> str:
@@ -246,7 +308,7 @@ def render_vehicle_report(vehicle: Mapping[str, Any], system: Mapping[str, Any],
       <div class="report-header">
         <div>
           <p class="eyebrow">Matched vehicle</p>
-          <h2>{esc(vehicle.get('year_from'))}-{esc(vehicle.get('year_to'))} {esc(vehicle.get('make'))} {esc(vehicle.get('model'))}</h2>
+          <h2>{esc(vehicle_display_title(vehicle))}</h2>
           <p class="subline">System {esc(system.get('code'))} - {esc(system.get('system_type') or system.get('type'))}</p>
         </div>
         <div class="report-badges">
@@ -260,20 +322,20 @@ def render_vehicle_report(vehicle: Mapping[str, Any], system: Mapping[str, Any],
         {panel("Quick Answer", quick_html)}
       </div>
 
-      {panel("Compatible Remote Options", remote_html + render_asset_cards(assets, "key_remote"))}
+      {panel("Compatible Remote Options", remote_html + render_asset_cards(assets, "key_remote") + render_procedure_diagrams(system, "key_remote"))}
 
       {panel("All Keys Lost / Field Workflow", workflow_html)}
       {panel("Technician Checklist", checklist_html)}
       {panel("Verified Identifiers", source_facts_html)}
 
-      {panel("Emergency Blade / Mechanical Key", mechanical_html + render_asset_cards(assets, "mechanical_key"))}
+      {panel("Emergency Blade / Mechanical Key", mechanical_html + render_asset_cards(assets, "mechanical_key") + render_procedure_diagrams(system, "mechanical_key"))}
 
       <div class="grid two">
         {panel("Transponder", render_kv_table(transponder_summary) + (f"<h4>Cloner Machine Information</h4>{cloner_html}" if cloner_html else ""))}
-        {panel("Programming / Diagnostic", programming_html + render_asset_cards(assets, "programming"))}
+        {panel("Programming / Diagnostic", programming_html + render_asset_cards(assets, "programming") + render_procedure_diagrams(system, "programming"))}
       </div>
 
-      {panel("Making a Working Key", making_html + render_asset_cards(assets, "making_key"), "procedure-panel")}
+      {panel("Making a Working Key", making_html + render_asset_cards(assets, "making_key") + render_procedure_diagrams(system, "making_key"), "procedure-panel")}
       {panel("Decoders / Readers", render_records_table([("tool", "Tool"), ("reference", "Reference")], system.get("decoders") or []))}
 
       {panel("Field Notes", render_list(making_key.get("field_notes") or []))}

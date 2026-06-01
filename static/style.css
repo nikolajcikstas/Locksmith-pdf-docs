@@ -662,6 +662,18 @@ li {
   aspect-ratio: 1120 / 360;
 }
 
+.diagram-frame {
+  background: #fff;
+  padding: 14px;
+}
+
+.diagram-frame svg {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  width: 100%;
+}
+
 .asset-card figcaption {
   background: var(--surface);
   border-top: 1px solid #e5ebf1;

@@ -22,7 +22,7 @@ from locksmith_docs.processing.document_pipeline import refresh_verified_output,
 from locksmith_docs.processing.job_status import latest_jobs, start_job
 from locksmith_docs.reports.ai_report_cleaner import report_api_key_fingerprint, report_cleanup_enabled, require_report_ai_access, targeted_ocr_debug
 from locksmith_docs.reports.build_drafts import load_page_image_lookup
-from locksmith_docs.reports.render import render_vehicle_report
+from locksmith_docs.reports.render import render_vehicle_report, vehicle_display_title
 from locksmith_docs.web.rendering import esc, is_search_video_id, render_video_card
 
 
@@ -157,6 +157,9 @@ def index(request: Request):
         requested = VehicleQuery(make=make, model=model, year=year)
         vehicle = repo.find_vehicle_best_effort(requested)
         if vehicle:
+            display_vehicle = dict(vehicle)
+            if vehicle["year_from"] <= year <= vehicle["year_to"]:
+                display_vehicle["requested_year"] = year
             system = repo.get_published_or_draft_system(vehicle["system_code"])
             assets = repo.list_assets_for_system(vehicle["system_code"])
             year_note = ""
@@ -168,7 +171,7 @@ def index(request: Request):
                 </section>
                 """
             result = year_note + (
-                render_vehicle_report(vehicle, system, assets)
+                render_vehicle_report(display_vehicle, system, assets)
                 if system
                 else """
                 <section class="panel empty-result">
@@ -461,7 +464,7 @@ def report_preview_api(
     return JSONResponse({
         "found": True,
         "report_id": code.lower(),
-        "title": system.get("title") or f"{year} {make_c.title()} {model_c.upper()}",
+        "title": vehicle_display_title({**vehicle, "requested_year": year}) or f"{year} {make_c.title()} {model_c.upper()}",
         "subtitle": f"System {code} · {system.get('system_type') or ''}".rstrip(" ·"),
         "intro": intro,
         "at_a_glance": at_a_glance,

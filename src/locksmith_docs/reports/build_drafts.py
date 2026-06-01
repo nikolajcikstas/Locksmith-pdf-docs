@@ -27,7 +27,7 @@ DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "report_drafts.json"
 DEFAULT_CACHE = PROJECT_ROOT / "data" / "ai_report_cache.json"
 DEFAULT_PAGES_INPUT = PROJECT_ROOT / "data" / "imported_pages.json"
 DEFAULT_VERIFIED_FACTS = PROJECT_ROOT / "data" / "verified_report_facts.json"
-CACHE_VERSION = "complete-report-v27-row-ocr"
+CACHE_VERSION = "complete-report-v29-title-diagrams-cloners"
 
 
 def load_sections(path: Path) -> list[dict[str, Any]]:
