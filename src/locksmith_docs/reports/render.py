@@ -224,6 +224,58 @@ def render_procedure_diagrams(system: Mapping[str, Any], placement: str) -> str:
     return f'<div class="asset-strip diagram-strip">{"".join(cards)}</div>'
 
 
+def render_standard_mechanical_diagram(system: Mapping[str, Any]) -> str:
+    """Render an original blade-orientation SVG from verified mechanical facts."""
+    diagrams = system.get("procedure_diagrams")
+    if isinstance(diagrams, Sequence) and not isinstance(diagrams, (str, bytes)):
+        for diagram in diagrams:
+            if (
+                isinstance(diagram, Mapping)
+                and str(diagram.get("placement") or "") == "mechanical_key"
+                and str(diagram.get("visual_type") or "") == "blade_orientation"
+            ):
+                return ""
+    mechanical = system.get("mechanical_key") if isinstance(system.get("mechanical_key"), Mapping) else {}
+    setup = mechanical.get("cutting_setup") if isinstance(mechanical.get("cutting_setup"), Mapping) else {}
+    setup_text = " ".join(str(value) for value in setup.values()).lower()
+    milling = str(mechanical.get("milling") or "")
+    has_track_facts = (
+        "cut track" in setup_text
+        or ("left track" in setup_text and "right track" in setup_text)
+        or "guide track" in setup_text
+    )
+    if "internal" not in milling.lower() or not has_track_facts:
+        return ""
+    profile = str(
+        mechanical.get("test_key")
+        or mechanical.get("ilco_keyway")
+        or (system.get("transponder") or {}).get("test_key")
+        or "Mechanical key"
+    ).strip()
+    schema = {
+        "title": f"{profile} mechanical blade orientation",
+        "placement": "mechanical_key",
+        "caption": f"{profile} orientation reference showing the source-listed cut track and guide track.",
+        "visual_type": "blade_orientation",
+        "blade_profile": profile,
+        "milling": milling,
+        "cut_track": str(setup.get("cut_track") or "Cut track - apply cut depths here"),
+        "guide_track": str(setup.get("guide_track") or "Guide track - clearance only"),
+        "note": "Orientation reference only. Use the spacing and depth tables for cutting values.",
+    }
+    svg = render_original_diagram_svg(schema)
+    if not svg:
+        return ""
+    return f"""
+    <div class="asset-strip diagram-strip">
+      <figure class="asset-card inline-asset inline-diagram">
+        <div class="diagram-frame">{svg}</div>
+        <figcaption>{esc(schema["caption"])}</figcaption>
+      </figure>
+    </div>
+    """
+
+
 def panel(title: str, content: str, extra_class: str = "") -> str:
     if not content.strip():
         return ""
@@ -331,7 +383,7 @@ def render_vehicle_report(vehicle: Mapping[str, Any], system: Mapping[str, Any],
       {panel("Technician Checklist", checklist_html)}
       {panel("Verified Identifiers", source_facts_html)}
 
-      {panel("Emergency Blade / Mechanical Key", mechanical_html + render_asset_cards(assets, "mechanical_key") + render_procedure_diagrams(system, "mechanical_key"))}
+      {panel("Emergency Blade / Mechanical Key", mechanical_html + render_asset_cards(assets, "mechanical_key") + render_standard_mechanical_diagram(system) + render_procedure_diagrams(system, "mechanical_key"))}
 
       <div class="grid two">
         {panel("Transponder", render_kv_table(transponder_summary) + (f"<h4>Cloner Machine Information</h4>{cloner_html}" if cloner_html else ""))}
