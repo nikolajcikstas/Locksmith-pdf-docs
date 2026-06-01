@@ -1,3 +1,12 @@
+---
+title: Locksmith Docs
+emoji: 🔑
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+---
+
 # Locksmith Vehicle Docs
 
 Python web application for a subscription locksmith vehicle documentation workflow.
