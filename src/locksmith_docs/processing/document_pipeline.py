@@ -586,6 +586,34 @@ def run_full_catalog_index_job(job_id: str) -> None:
         update_job(job_id, "failed", f"{type(exc).__name__}: {exc}")
 
 
+def run_owner_library_pipeline_job(job_id: str) -> None:
+    paths = uploaded_pdf_paths()
+    if not paths:
+        update_job(job_id, "failed", "No stored PDFs found. Upload documents first.")
+        return
+    try:
+        update_job(job_id, "running", f"Preparing {len(paths)} stored PDF(s): local OCR index first, no AI requests yet.")
+        indexed = index_all_uploaded_pdfs_without_ai(job_id=job_id)
+        update_job(
+            job_id,
+            "running",
+            f"Index ready: {indexed['vehicle_links']} vehicle link(s), {indexed['mapped_system_codes']} system(s). "
+            "Now verifying the next controlled report batch.",
+            **indexed,
+        )
+        result = rebuild_catalog(skip_ocr_pages=True, regenerate_assets=True, job_id=job_id)
+        update_job(
+            job_id,
+            "complete",
+            f"Library pipeline complete. Published reports: {result['publishable_reports']}; "
+            f"waiting for later budgeted batches: {result['reports_awaiting_verification']}; "
+            f"rejected for correction: {result['rejected_reports']}; original diagrams: {result['public_diagrams_in_batch']}.",
+            **{**indexed, **result},
+        )
+    except Exception as exc:
+        update_job(job_id, "failed", f"{type(exc).__name__}: {exc}")
+
+
 def run_rebuild_job(job_id: str, target_system_code: str | None = None) -> None:
     try:
         target_message = f" for {target_system_code}" if target_system_code else ""

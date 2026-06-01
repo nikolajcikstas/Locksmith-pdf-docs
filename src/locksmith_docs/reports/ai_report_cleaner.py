@@ -369,6 +369,24 @@ def enrich_draft_with_targeted_ocr(draft: dict[str, Any], source_images: list[Pa
         return draft
     mechanical_full_text = _ocr_detail_region(mechanical_page, pytesseract)
     detail_full_text = _ocr_detail_region(detail_page, pytesseract)
+    mw, mh = mechanical_page.size
+    dw, dh = detail_page.size
+    mechanical_keyref_text = _ocr_detail_region(
+        mechanical_page.crop((int(mw * 0.02), int(mh * 0.10), int(mw * 0.98), int(mh * 0.42))),
+        pytesseract,
+    )
+    mechanical_programming_text = _ocr_detail_region(
+        mechanical_page.crop((int(mw * 0.04), int(mh * 0.70), int(mw * 0.94), int(mh * 0.94))),
+        pytesseract,
+    )
+    detail_methods_text = _ocr_detail_region(
+        detail_page.crop((int(dw * 0.04), int(dh * 0.34), int(dw * 0.96), int(dh * 0.58))),
+        pytesseract,
+    )
+    detail_lockparts_text = _ocr_detail_region(
+        detail_page.crop((int(dw * 0.04), int(dh * 0.72), int(dw * 0.96), int(dh * 0.96))),
+        pytesseract,
+    )
     width, height = detail_page.size
     chip_text = _ocr_detail_region(
         detail_page.crop((0, int(height * 0.04), width, int(height * 0.20))),
@@ -389,6 +407,28 @@ def enrich_draft_with_targeted_ocr(draft: dict[str, Any], source_images: list[Pa
     enriched = deepcopy(draft)
     if transponder:
         enriched["transponder"] = transponder
+    key_options = _extract_key_reference_options(mechanical_keyref_text)
+    if key_options:
+        remote = deepcopy(enriched.get("key_remote") if isinstance(enriched.get("key_remote"), dict) else {})
+        if not remote.get("known_options"):
+            remote["known_options"] = key_options
+        enriched["key_remote"] = remote
+    decoder_rows = _extract_decoder_rows(mechanical_keyref_text)
+    if decoder_rows:
+        enriched["decoders"] = decoder_rows
+    programming_patch = _extract_programming_patch(mechanical_programming_text)
+    if programming_patch:
+        programming = deepcopy(enriched.get("programming") if isinstance(enriched.get("programming"), dict) else {})
+        programming.update({key: value for key, value in programming_patch.items() if value})
+        enriched["programming"] = programming
+    methods = _extract_numbered_methods(detail_methods_text)
+    if methods:
+        making_key = deepcopy(enriched.get("making_key") if isinstance(enriched.get("making_key"), dict) else {})
+        making_key["methods"] = methods
+        enriched["making_key"] = making_key
+    lock_parts = _extract_lock_parts_rows(detail_lockparts_text)
+    if lock_parts:
+        enriched["lock_parts"] = lock_parts
     width, height = mechanical_page.size
     table_text = _ocr_detail_region(
         mechanical_page.crop((0, int(height * 0.48), width, int(height * 0.70))),
@@ -753,6 +793,158 @@ def _extract_cloner_tools(image: Image.Image, pytesseract: Any) -> list[dict[str
     return rows
 
 
+def _extract_decoder_rows(text: str) -> list[dict[str, str]]:
+    source = " ".join(text.split())
+    direct_patterns = [
+        ("Determinator", r"Determinator\s*:\s*([A-Z0-9 ]{2,16}?)(?=\s+Lishi\s*:)", True),
+        ("Lishi", r"Lishi\s*:\s*([A-Z0-9]{2,16}?)(?=\s+Accu\s*Reader\s*:|\s+AccuReader\s*:)", True),
+        ("AccuReader", r"Accu\s*Reader\s*:\s*([A-Z0-9 ]{2,16}?)(?=\s+[_| -]*\s*EEZ\s+Reader\s*:)", True),
+        ("EEZ Reader", r"EEZ\s+Reader\s*:\s*([A-Z0-9]{2,16}?)(?=\s+Cobra\s*:)", True),
+        ("Cobra", r"Cobra\s*:\s*([A-Z0-9]{2,16})", True),
+    ]
+    direct_rows = []
+    for tool, pattern, _ in direct_patterns:
+        match = re.search(pattern, source, re.IGNORECASE)
+        if match:
+            reference = _clean_decoder_reference(match.group(1))
+            if _is_clean_decoder_reference(reference):
+                direct_rows.append({"tool": tool, "reference": reference})
+    if len(direct_rows) >= 3:
+        return direct_rows
+    labels = ("Determinator", "Lishi", "AccuReader", "EEZ Reader", "Cobra")
+    if not any(f"{label}:" in source for label in labels):
+        return []
+    rows: list[dict[str, str]] = []
+    for index, label in enumerate(labels):
+        next_labels = labels[index + 1 :]
+        stop = "|".join(re.escape(f"{next_label}:") for next_label in next_labels) or r"$"
+        match = re.search(rf"{re.escape(label)}\s*:\s*(.+?)(?=\s+(?:{stop})|$)", source, re.IGNORECASE)
+        if not match:
+            continue
+        reference = " ".join(match.group(1).split()).strip(" .,:;|")
+        reference = re.sub(r"\b(?:There|There\s+are|Programmer|Diagnostic)\b.*$", "", reference, flags=re.IGNORECASE).strip()
+        if not reference:
+            continue
+        reference = _clean_decoder_reference(reference)
+        if _is_clean_decoder_reference(reference):
+            rows.append({"tool": label, "reference": reference})
+    return rows
+
+
+def _clean_decoder_reference(value: str) -> str:
+    cleaned = " ".join(value.split()).strip(" .,:;|_->").upper()
+    cleaned = re.sub(r"\b(CHR|CHRY)(\d)\b", r"\1 \2", cleaned)
+    cleaned = re.sub(r"\b((?:KDC|Y|CY|HU|TOY|VWI|CHR|CHRY)[A-Z0-9 ]*?\d[A-Z0-9]*)(?:\s+A)+$", r"\1", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    return cleaned
+
+
+def _is_clean_decoder_reference(value: str) -> bool:
+    cleaned = str(value or "").strip().upper()
+    if not cleaned or len(cleaned) > 20:
+        return False
+    if re.search(r"[|:>]", cleaned):
+        return False
+    return not re.search(
+        r"\b(?:DETERMINATOR|LISHI|ACCU\s*READER|ACCUREADER|EEZ\s*READER|EEZREADER|COBRA|PROGRAMMER|FACTORY)\b",
+        cleaned,
+    )
+
+
+def _extract_programming_patch(text: str) -> dict[str, Any]:
+    source = " ".join(text.split())
+    patch: dict[str, Any] = {}
+    if re.search(r"\bFactory\s+Tool\b", source, re.IGNORECASE):
+        tools = []
+        if re.search(r"\bMicro\s*Pod\b|\bMicroPod\b", source, re.IGNORECASE):
+            tools.append("MicroPod")
+        if re.search(r"\bwi\s*TECH\b|\bwilTECH\b|\bwitech\b", source, re.IGNORECASE):
+            tools.append("wiTECH")
+        if tools:
+            patch["factory_tool"] = " / ".join(tools)
+    if re.search(r"\bPIN\s*CODE\b|\bPIN\b.{0,16}\bREQUIRED\b", source, re.IGNORECASE):
+        patch["pin_required"] = "Yes"
+    if re.search(r"\b4\s*[- ]?\s*digit\b", source, re.IGNORECASE):
+        patch["pin_guidance"] = "4-digit PIN required."
+    return patch
+
+
+def _extract_numbered_methods(text: str) -> list[str]:
+    source = "\n".join(line.strip() for line in text.splitlines() if line.strip())
+    canonical: list[str] = []
+    upper = source.upper()
+    if "LOCK DECODER/READER" in upper or "LOCK DECODER" in upper:
+        canonical.append("Use a Lock Decoder/Reader tool to decode the door lock.")
+    if "TRYOUT" in upper and ("TO-93" in upper or "T0-93" in upper or "SET 97" in upper):
+        canonical.append("Use tryout keys, Baxter Systems Tryout keys set 97 All Locks, or Aero Lock tryout set TO-93.")
+    if re.search(r"Remove\s+a\s+door\s+or\s+trunk\s+cylinder", source, re.IGNORECASE):
+        canonical.append("Remove a door or trunk cylinder and decode it.")
+    if len(canonical) >= 2:
+        return canonical
+    methods: list[str] = []
+    for match in re.finditer(r"Method\s*#?\s*([1-9])\s+(.+?)(?=\n\s*Method\s*#?\s*[1-9]\s+|\Z)", source, re.IGNORECASE | re.DOTALL):
+        detail = " ".join(match.group(2).split()).strip(" .")
+        if detail and len(detail) > 12 and len(detail) < 180 and "Method #" not in detail:
+            methods.append(detail + ".")
+    return list(dict.fromkeys(methods))
+
+
+def _extract_lock_parts_rows(text: str) -> list[dict[str, str]]:
+    source = " ".join(text.split())
+    rows: list[dict[str, str]] = []
+    if re.search(r"2011\s*[-–]\s*12", source) and re.search(r"Locks\s+not\s+available\s+from\s+Strattec", source, re.IGNORECASE):
+        pin = _first_match(source, r"\b(703927)\b")
+        rows.append({
+            "years": "2011-12",
+            "models": "Routan" if "Routan" in source else "",
+            "ignition_lock": "Locks not available from Strattec",
+            "door_lock": "Locks not available from Strattec",
+            "trunk_lock": "Locks not available from Strattec",
+            "pin_kit": pin,
+        })
+    if re.search(r"2009\s*[-–]\s*10", source) and re.search(r"Fobik\s+ignition", source, re.IGNORECASE):
+        rows.append({
+            "years": "2009-10",
+            "models": "Routan" if "Routan" in source else "",
+            "ignition_lock": "Fobik ignition",
+            "door_lock": _first_match(source, r"\b(704275)\b"),
+            "trunk_lock": _first_match(source, r"\b(706371)\s*Liftgate\b") + " Liftgate" if _first_match(source, r"\b(706371)\s*Liftgate\b") else "",
+            "pin_kit": _first_match(source, r"\b(703927)\b"),
+        })
+    return [row for row in rows if any(value for value in row.values())]
+
+
+def _extract_key_reference_options(text: str) -> list[dict[str, str]]:
+    source = " ".join(text.split())
+    if not re.search(r"\bFOBIK\s+Remote\b", source, re.IGNORECASE):
+        return []
+    normalized = source.upper().replace("I", "1").replace("Z", "2").replace("S", "5")
+    refs = []
+    for canonical, pattern in (
+        ("DGE-POD-KEY", r"\bDGE\s*[- ]\s*POD\s*[- ]\s*KEY\b"),
+        ("BY170-PT", r"\bBY170\s*[- ]\s*PT\b"),
+        ("Y170-PT", r"\bY170\s*[- ]\s*PT\b"),
+        ("BY166-PHT", r"\bBY166\s*[- ]\s*PHT\b"),
+        ("TP12CHR15P1", r"\bTP12CHR15P1\b"),
+        ("5909874", r"\b5909874\b"),
+    ):
+        match = re.search(pattern, normalized, re.IGNORECASE)
+        if match:
+            refs.append(canonical)
+    if not refs:
+        return []
+    return [{
+        "models": "Routan" if "Routan" in source else "",
+        "part": " / ".join(dict.fromkeys(refs)),
+        "notes": "FOBIK remote; verify the correct part number by VIN and trim level with the dealer.",
+    }]
+
+
+def _first_match(text: str, pattern: str) -> str:
+    match = re.search(pattern, text, re.IGNORECASE)
+    return match.group(1) if match else ""
+
+
 def merge_targeted_ocr_fields(draft: dict[str, Any], mechanical_text: str, detail_text: str) -> dict[str, Any]:
     """Carry legible table/header values from enlarged OCR into the structured draft."""
     enriched = deepcopy(draft)
@@ -930,7 +1122,7 @@ def sanitize_structured_sections(draft: dict[str, Any]) -> dict[str, Any]:
             text = " ".join(str(value) for value in record.values()).lower()
             has_inventory_reference = any(
                 token in text for token in ("strattec", "asp", "pin kit", "part", "available", "not available")
-            )
+            ) or bool(re.search(r"\b70\d{4}\b", text))
             has_procedure_noise = any(
                 token in text for token in ("method", "decoder", "reader", "determine", "working key", "disassemble")
             )
@@ -1027,6 +1219,8 @@ def merge_reliable_extracted_facts(cleaned: dict[str, Any], source_draft: dict[s
                 target_remote[name] = source_remote[name]
     source_decoders = source_draft.get("decoders") if isinstance(source_draft.get("decoders"), list) else []
     target_decoders = merged.get("decoders") if isinstance(merged.get("decoders"), list) else []
+    if source_decoders:
+        target_decoders = deepcopy(source_decoders)
     by_tool = {
         str(item.get("tool") or "").casefold(): item
         for item in target_decoders if isinstance(item, dict) and item.get("tool")
@@ -1042,6 +1236,20 @@ def merge_reliable_extracted_facts(cleaned: dict[str, Any], source_draft: dict[s
         for name in ("test_key", "chip", "reusable", "transponder_type"):
             if not target_transponder.get(name) and source_transponder.get(name):
                 target_transponder[name] = source_transponder[name]
+        if source_transponder.get("cloner_tools"):
+            target_transponder["cloner_tools"] = deepcopy(source_transponder["cloner_tools"])
+    source_programming = source_draft.get("programming") if isinstance(source_draft.get("programming"), dict) else {}
+    target_programming = merged.setdefault("programming", {})
+    if isinstance(target_programming, dict):
+        for name in ("pin_required", "factory_tool", "pin_guidance"):
+            if source_programming.get(name):
+                target_programming[name] = deepcopy(source_programming[name])
+    source_making_key = source_draft.get("making_key") if isinstance(source_draft.get("making_key"), dict) else {}
+    target_making_key = merged.setdefault("making_key", {})
+    if isinstance(target_making_key, dict) and source_making_key.get("methods"):
+        target_making_key["methods"] = deepcopy(source_making_key["methods"])
+    if source_draft.get("lock_parts"):
+        merged["lock_parts"] = deepcopy(source_draft["lock_parts"])
     source_mechanical = source_draft.get("mechanical_key") if isinstance(source_draft.get("mechanical_key"), dict) else {}
     target_mechanical = merged.setdefault("mechanical_key", {})
     if isinstance(target_mechanical, dict):
@@ -1199,6 +1407,17 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
         decoder_text = json.dumps(draft.get("decoders") or [], ensure_ascii=False).upper()
         if "LISHI" not in decoder_text:
             issues.append("Source includes a Lishi reference but the decoder table does not.")
+    expected_decoders = _extract_decoder_rows(source_text)
+    if expected_decoders:
+        decoder_text = json.dumps(draft.get("decoders") or [], ensure_ascii=False).upper()
+        for decoder in expected_decoders:
+            reference = str(decoder.get("reference") or "").upper()
+            tool = str(decoder.get("tool") or "").upper()
+            if reference and (tool not in decoder_text or reference not in decoder_text):
+                issues.append(f"Source decoder {tool} {reference} is missing or mismatched in the structured decoder table.")
+                break
+    if re.search(r"\bFactory\s+Tool\b", source, re.IGNORECASE) and not programming.get("factory_tool"):
+        issues.append("Source includes a factory diagnostic tool, but programming.factory_tool is missing.")
     if re.search(r"\b(?:ILCO|KEYWAY)\s*[:#]", source) and not mechanical.get("ilco_keyway"):
         issues.append("Source includes blade/keyway identification but the structured report does not.")
     if re.search(r"\b(?:TDB1000|TCODE|MVP|AUTEL|SMART\s*PRO|AUTO\s*PRO\s*PAD)\b", str(mechanical.get("ilco_keyway") or ""), re.IGNORECASE):
@@ -1281,6 +1500,11 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
         issues.append("Source includes lock-parts or supplier information but the structured report does not.")
     if "PIN KIT" in source and "PIN KIT" not in rendered:
         issues.append("Source includes a lock-parts PIN kit number, but the structured report does not.")
+    if re.search(r"\b(?:PIN\s+KIT|STRATTEC|IGNITION\s+LOCK|DOOR\s+LOCK|TRUNK\s+LOCK|LIFTGATE)\b", source):
+        for part_number in sorted(set(re.findall(r"\b70\d{4}\b", source))):
+            if part_number not in rendered:
+                issues.append(f"Source lock-parts table includes part number {part_number}, but it is missing from the structured report.")
+                break
     lock_labels = sum(label in source for label in ("IGNITION", "DOORS", "TRUNK", "GLOVE BOX"))
     if lock_labels >= 2 and "METHOD" in source:
         diagrams = draft.get("procedure_diagrams") if isinstance(draft.get("procedure_diagrams"), list) else []

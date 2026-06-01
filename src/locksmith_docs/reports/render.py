@@ -184,7 +184,10 @@ def safe_lock_part_records(records: Sequence[Mapping[str, Any]]) -> list[Mapping
         if not isinstance(record, Mapping):
             continue
         text = " ".join(str(value or "") for value in record.values())
-        if not re.search(r"\b(?:STRATTEC|ASP|PIN\s*kit|part|available|not\s+available)\b", text, re.IGNORECASE):
+        if not (
+            re.search(r"\b(?:STRATTEC|ASP|PIN\s*kit|part|available|not\s+available)\b", text, re.IGNORECASE)
+            or re.search(r"\b70\d{4}\b", text)
+        ):
             continue
         if re.search(r"\b(?:method|decode|decoder|reader|determine|working key|disassemble|no\s*codes)\b", text, re.IGNORECASE):
             continue

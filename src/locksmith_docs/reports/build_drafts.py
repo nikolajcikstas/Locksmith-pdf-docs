@@ -27,7 +27,7 @@ DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "report_drafts.json"
 DEFAULT_CACHE = PROJECT_ROOT / "data" / "ai_report_cache.json"
 DEFAULT_PAGES_INPUT = PROJECT_ROOT / "data" / "imported_pages.json"
 DEFAULT_VERIFIED_FACTS = PROJECT_ROOT / "data" / "verified_report_facts.json"
-CACHE_VERSION = "complete-report-v29-title-diagrams-cloners"
+CACHE_VERSION = "complete-report-v31-lock-parts-inventory"
 
 
 def load_sections(path: Path) -> list[dict[str, Any]]:
@@ -211,7 +211,11 @@ def build_drafts(
         if key in cache:
             cached_value = cache[key]
             if cached_value.get("__rejected__") is True and isinstance(cached_value.get("draft"), dict):
-                if str(cached_value.get("retry_mode", "0")) != retry_mode:
+                should_retry_selected = (
+                    publishable_system_codes is not None
+                    and str(draft.get("code") or "") in publishable_system_codes
+                )
+                if should_retry_selected or str(cached_value.get("retry_mode", "0")) != retry_mode:
                     cache.pop(key, None)
                     cached_value = None
                 else:

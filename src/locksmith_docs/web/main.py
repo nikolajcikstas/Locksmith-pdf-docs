@@ -18,7 +18,7 @@ from locksmith_docs.billing.stripe_checkout import StripeNotConfigured, create_c
 from locksmith_docs.core.config import get_settings
 from locksmith_docs.db.init_schema import init_schema
 from locksmith_docs.db.repository import LocksmithRepository, VehicleQuery
-from locksmith_docs.processing.document_pipeline import refresh_verified_output, run_asset_import_job, run_asset_regeneration_job, run_full_catalog_index_job, run_pilot_import_job, run_publish_next_batch_job, run_rebuild_job, run_refresh_verified_output_job, run_reprocess_job, run_retry_rejected_reports_job, run_upload_job, save_uploaded_pdf, uploaded_pdf_paths
+from locksmith_docs.processing.document_pipeline import refresh_verified_output, run_asset_import_job, run_asset_regeneration_job, run_full_catalog_index_job, run_owner_library_pipeline_job, run_pilot_import_job, run_publish_next_batch_job, run_rebuild_job, run_refresh_verified_output_job, run_reprocess_job, run_retry_rejected_reports_job, run_upload_job, save_uploaded_pdf, uploaded_pdf_paths
 from locksmith_docs.processing.job_status import latest_jobs, start_job
 from locksmith_docs.reports.ai_report_cleaner import report_api_key_fingerprint, report_cleanup_enabled, require_report_ai_access, targeted_ocr_debug
 from locksmith_docs.reports.build_drafts import load_page_image_lookup
@@ -615,6 +615,11 @@ def admin_dashboard(message: str = ""):
           <p class="subline">Verify and publish the next <strong>{report_batch_limit}</strong> queued report(s). Previously approved reports remain available and are reused without new AI requests.</p>
           <button class="primary-button" data-busy-text="Publishing...">Publish next batch</button>
         </form>
+        <form class="panel admin-card primary-task" action="/admin/process-library" method="post">
+          <h3>Process uploaded library</h3>
+          <p class="subline">One-button owner workflow: rebuild the lookup index locally, then verify and publish the next controlled report batch with original diagrams.</p>
+          <button class="primary-button" data-busy-text="Processing...">Process library</button>
+        </form>
         <form class="panel admin-card primary-task" action="/admin/rebuild" method="post">
           <h3>Publish a selected report</h3>
           <p class="subline">Select one indexed vehicle system for AI verification and original diagram creation. The pilot budget limit is <strong>{report_batch_limit}</strong> report per run.</p>
@@ -739,6 +744,13 @@ def admin_publish_next_batch(background_tasks: BackgroundTasks):
     job_id = start_job("publish", "Publish next queued report batch")
     background_tasks.add_task(run_publish_next_batch_job, job_id)
     return RedirectResponse(url=f"/admin?message=Queued report batch started: {job_id}.", status_code=303)
+
+
+@app.post("/admin/process-library")
+def admin_process_library(background_tasks: BackgroundTasks):
+    job_id = start_job("pipeline", "Process uploaded library")
+    background_tasks.add_task(run_owner_library_pipeline_job, job_id)
+    return RedirectResponse(url=f"/admin?message=Library processing started: {job_id}.", status_code=303)
 
 
 @app.post("/admin/check-ai")
