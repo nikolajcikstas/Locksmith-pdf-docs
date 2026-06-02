@@ -1,0 +1,372 @@
+[
+  {
+    "system_code": "AV-24",
+    "source_document": "Audi-VW-Porsche.pdf",
+    "source_pages": [
+      50,
+      51
+    ],
+    "confidence": 0.6,
+    "ai_verified": true,
+    "publication_issues": [],
+    "draft": {
+      "code": "AV-24",
+      "title": "2009-2012 Volkswagen Routan",
+      "decoders": [
+        {
+          "tool": "Determinator",
+          "reference": "CHR 2"
+        },
+        {
+          "tool": "Lishi",
+          "reference": "CY24"
+        },
+        {
+          "tool": "AccuReader",
+          "reference": "CHRY 8"
+        },
+        {
+          "tool": "EEZ Reader",
+          "reference": "Y157"
+        },
+        {
+          "tool": "Cobra",
+          "reference": "KDC8"
+        }
+      ],
+      "warnings": [
+        "Verify exact part numbers by VIN before ordering.",
+        "Confirm programmer support before connecting to the vehicle."
+      ],
+      "key_remote": {
+        "remote_type": "Proximity fob",
+        "known_options": [
+          {
+            "part": "DGE-POD-KEY / BY170-PT / Y170-PT / BY166-PHT / TP12CHR15P1 / 5909874",
+            "notes": "FOBIK remote; verify the correct part number by VIN and trim level with the dealer.",
+            "models": "Routan"
+          }
+        ]
+      },
+      "lock_parts": [
+        {
+          "years": "2011-12",
+          "models": "Routan",
+          "pin_kit": "703927",
+          "door_lock": "Locks not available from Strattec",
+          "trunk_lock": "Locks not available from Strattec",
+          "ignition_lock": "Locks not available from Strattec"
+        },
+        {
+          "years": "2009-10",
+          "models": "Routan",
+          "pin_kit": "703927",
+          "door_lock": "704275",
+          "trunk_lock": "706371 Liftgate",
+          "ignition_lock": "Fobik ignition"
+        }
+      ],
+      "making_key": {
+        "methods": [
+          "Use a Lock Decoder/Reader tool to decode the door lock.",
+          "Use tryout keys, Baxter Systems Tryout keys set 97 All Locks, or Aero Lock tryout set TO-93.",
+          "Remove a door or trunk cylinder and decode it."
+        ],
+        "field_workflow": [
+          {
+            "step": "Confirm vehicle match",
+            "detail": "Verify make, model, year, system code and trim before ordering parts."
+          },
+          {
+            "step": "Verify parts",
+            "detail": "Confirm FCC ID, frequency, button count and part number before programming."
+          },
+          {
+            "step": "Prepare access",
+            "detail": "Use a supported programmer for the exact vehicle. PIN access is required or mentioned."
+          },
+          {
+            "step": "Create mechanical key",
+            "detail": "Use approved blade, spacing, depths and decoder data from this report."
+          },
+          {
+            "step": "Program and test",
+            "detail": "Program the remote/transponder and test every customer-facing function before release."
+          }
+        ],
+        "code_availability": "No usable lock code is listed for this system; decode an accessible lock or cylinder when making a mechanical key."
+      },
+      "field_notes": [
+        "PIN access is mentioned for this system; confirm the PIN workflow before connecting a programmer.",
+        "VIN or dealer verification is mentioned; verify fitment before ordering key, fob, or proximity parts.",
+        "A lock reader/decoder path is available or referenced; use the listed decoder data before removing parts.",
+        "Door lock/cylinder information is relevant for making a working mechanical key.",
+        "Trunk or hatch lock information may help when the door lock does not provide enough usable cuts.",
+        "Reusable status is mentioned; verify whether used keys/fobs are allowed for this system.",
+        "Airbag or retainer safety language is present; follow safe removal procedure before servicing lock components."
+      ],
+      "programming": {
+        "tools": [
+          {
+            "name": "Smart Pro",
+            "status": "Check support"
+          },
+          {
+            "name": "MVP",
+            "status": "Check support"
+          },
+          {
+            "name": "TDB1000",
+            "status": "Check support"
+          },
+          {
+            "name": "Hotwire",
+            "status": "Check support"
+          },
+          {
+            "name": "Autel",
+            "status": "Check support"
+          },
+          {
+            "name": "IM608",
+            "status": "Check support"
+          }
+        ],
+        "cloning": "Check source",
+        "factory_tool": "MicroPod / wiTECH",
+        "pin_guidance": "4-digit PIN required.",
+        "pin_required": "Yes"
+      },
+      "system_type": "Proximity / Smart Key",
+      "transponder": {
+        "chip": "Philips 46",
+        "reusable": "No (Must be Unlocked)",
+        "test_key": "Y157 / Y159",
+        "cloner_tools": [
+          {
+            "name": "Diag Box",
+            "model": "Clone Wizard",
+            "status": "Yes; requires Philips Crypto update where noted"
+          },
+          {
+            "name": "China",
+            "model": "CN900",
+            "status": "Yes; requires Philips Crypto update where noted"
+          },
+          {
+            "name": "ILCO / Silca",
+            "model": "RW4",
+            "status": "Yes; requires Philips Crypto update where noted"
+          },
+          {
+            "name": "JMA USA",
+            "model": "TRS-5000 / EVO",
+            "status": "Yes; requires Philips Crypto update where noted"
+          },
+          {
+            "name": "Keyline",
+            "model": "884 Ultegra",
+            "status": "Yes; requires Philips Crypto update where noted"
+          },
+          {
+            "name": "L.D.",
+            "model": "Miraclone",
+            "status": "Yes; requires Philips Crypto update where noted"
+          },
+          {
+            "name": "Scorpio",
+            "status": "Yes; requires Philips Crypto update where noted"
+          },
+          {
+            "name": "VVDI",
+            "model": "Mini Tool",
+            "status": "Yes; requires Philips Crypto update where noted"
+          }
+        ],
+        "transponder_type": "Proximity"
+      },
+      "quick_answer": [
+        "PIN access appears to be required or mentioned for this system.",
+        "Use the sections below to verify blade, FCC/frequency, programming path, decoder references, and final tests before releasing the vehicle."
+      ],
+      "source_facts": {
+        "Part numbers": [
+          "3231423",
+          "5909874"
+        ],
+        "Blades / keyways": [
+          "CY24",
+          "HU49",
+          "Y157",
+          "cY24"
+        ],
+        "Programming tools": [
+          "Smart Pro",
+          "MVP",
+          "TDB1000",
+          "Hotwire",
+          "Autel",
+          "IM608"
+        ]
+      },
+      "service_notes": [
+        "Use this system record as the job control sheet: verify vehicle identity, blade data, remote/FCC data, and programmer support before work begins.",
+        "Use the spacing/depth data in the mechanical key section when cutting the blade; do not rely on screenshot tables.",
+        "For remote or proximity systems, verify FCC ID, frequency, button count, and part number before programming.",
+        "Check the transponder/chip section before choosing a reusable, clone, or program-new workflow.",
+        "PIN access is required or referenced; confirm the PIN source and programmer support before attempting programming.",
+        "Dealer or VIN verification is referenced; confirm exact part fitment before ordering.",
+        "When all keys are lost, decode the door lock/cylinder or use the listed lock reader path to recover cuts.",
+        "If supported by the vehicle, the trunk/hatch cylinder can be used as an alternate decoding source.",
+        "Lock part availability is mentioned; verify lock, cylinder, and pin-kit information before parts ordering."
+      ],
+      "job_essentials": {
+        "PIN": "Required",
+        "Lishi / decoder": "Lishi: HU49; Determinator: VWI; EEZ Reader: Y157 Cobra; Cobra: KDC8",
+        "Programming path": "Use a supported programmer for the exact vehicle. PIN access is required or mentioned."
+      },
+      "mechanical_key": {
+        "itl": "69",
+        "card": "CX102",
+        "macs": "2",
+        "style": "Double-sided",
+        "depths": {
+          "1": ".340",
+          "2": ".315",
+          "3": ".290",
+          "4": ".265"
+        },
+        "spacing": {
+          "1": ".941",
+          "2": ".849",
+          "3": ".757",
+          "4": ".665",
+          "5": ".573",
+          "6": ".481",
+          "7": ".389",
+          "8": ".297"
+        },
+        "air_bags": "Yes",
+        "start_cut": ".310",
+        "cut_to_cut": ".092",
+        "code_series": "M 1-2618",
+        "ilco_keyway": "CY24 / Y157 / cY24",
+        "cutting_setup": {
+          "FRAMON": "Mentioned in source; verify exact setup on source page during review.",
+          "Pak-A-Punch": "Mentioned in source; verify exact setup on source page during review.",
+          "Curtis Clipper": "Mentioned in source; verify exact setup on source page during review."
+        },
+        "ignition_retainer": "None"
+      },
+      "source_coverage": [
+        "Source coverage: pages 50-54."
+      ],
+      "troubleshooting": [
+        {
+          "issue": "Vehicle or trim mismatch",
+          "action": "Confirm make, model, year, system code, FCC/frequency, and VIN-based part fitment before ordering or programming."
+        },
+        {
+          "issue": "PIN access required",
+          "action": "Obtain or calculate the correct PIN before programming; stop if the tool cannot support the PIN workflow for this vehicle."
+        },
+        {
+          "issue": "Part number uncertainty",
+          "action": "Verify the remote or proximity fob by VIN when the source indicates dealer/VIN confirmation."
+        },
+        {
+          "issue": "Used remote or chip may fail",
+          "action": "Check reusable status before selling or programming a used fob/transponder."
+        },
+        {
+          "issue": "Column or lock removal risk",
+          "action": "Follow airbag and retainer safety steps before removing ignition or column components."
+        }
+      ],
+      "procedure_diagrams": [
+        {
+          "title": "Lock positions",
+          "panels": [
+            {
+              "rows": [
+                [
+                  "Ignition",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  ""
+                ],
+                [
+                  "Doors / trunk / hatch",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  ""
+                ],
+                [
+                  "Glove box",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              ],
+              "label": "Lock positions",
+              "columns": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8"
+              ]
+            }
+          ],
+          "caption": "Key positions for ignition, doors, and trunk.",
+          "placement": "making_key"
+        }
+      ],
+      "technician_checklist": {
+        "Final tests": [
+          "Mechanical key operation",
+          "Remote lock/unlock",
+          "Start authorization",
+          "Trunk/remote start if equipped"
+        ],
+        "Bring to the job": [
+          "Supported programmer",
+          "Correct blade/keyway",
+          "PIN access if required"
+        ],
+        "Verify before ordering": [
+          "VIN-based part number",
+          "FCC ID",
+          "Frequency",
+          "Chip/transponder type"
+        ]
+      },
+      "vehicle_applications": [
+        {
+          "make": "Volkswagen",
+          "model": "Routan",
+          "year_to": 2012,
+          "year_from": 2009
+        }
+      ]
+    }
+  }
+]

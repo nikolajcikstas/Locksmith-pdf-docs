@@ -17,6 +17,7 @@ from locksmith_docs.billing.plans import PLANS, get_plan, subscription_bypass_en
 from locksmith_docs.billing.stripe_checkout import StripeNotConfigured, create_checkout_session
 from locksmith_docs.core.config import get_settings
 from locksmith_docs.db.init_schema import init_schema
+from locksmith_docs.db.report_seed import ensure_bundled_report_seed, export_published_report_seed
 from locksmith_docs.db.repository import LocksmithRepository, VehicleQuery
 from locksmith_docs.processing.document_pipeline import refresh_verified_output, run_asset_import_job, run_asset_regeneration_job, run_full_catalog_index_job, run_owner_library_pipeline_job, run_pilot_import_job, run_publish_next_batch_job, run_rebuild_job, run_refresh_verified_output_job, run_reprocess_job, run_retry_rejected_reports_job, run_upload_job, save_uploaded_pdf, uploaded_pdf_paths
 from locksmith_docs.processing.job_status import latest_jobs, start_job
@@ -46,6 +47,7 @@ app.add_middleware(
 @app.on_event("startup")
 def ensure_database_schema() -> None:
     init_schema()
+    ensure_bundled_report_seed()
     if (settings.data_dir / "report_drafts.json").exists():
         refresh_verified_output()
 
@@ -643,6 +645,11 @@ def admin_dashboard(message: str = ""):
           <p class="subline">Re-render approved reports and diagrams without API usage.</p>
           <button class="secondary-button" data-busy-text="Refreshing...">Refresh output</button>
         </form>
+        <form class="panel admin-card" action="/admin/export-report-seed" method="post">
+          <h3>Package approved reports</h3>
+          <p class="subline">Save already published reports into the deployable app package. Source OCR and PDFs are not included.</p>
+          <button class="secondary-button" data-busy-text="Packaging...">Package reports</button>
+        </form>
       </div>
     </section>
     <section class="panel admin-table">
@@ -765,6 +772,15 @@ def admin_check_ai():
         )
     return RedirectResponse(
         url=f"/admin?message={quote_plus(f'AI connection verified for key fingerprint {fingerprint}.')}",
+        status_code=303,
+    )
+
+
+@app.post("/admin/export-report-seed")
+def admin_export_report_seed():
+    path = export_published_report_seed()
+    return RedirectResponse(
+        url=f"/admin?message={quote_plus(f'Packaged approved reports into {path.relative_to(settings.project_root)}.')}",
         status_code=303,
     )
 

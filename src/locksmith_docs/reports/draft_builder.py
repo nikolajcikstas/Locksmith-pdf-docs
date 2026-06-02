@@ -48,7 +48,7 @@ def build_report_draft(section: dict[str, Any]) -> dict[str, Any]:
 
     draft = {
         "code": system_code,
-        "title": f"{system_code} Field Reference",
+        "title": report_title(system_code, vehicle_applications),
         "system_type": infer_system_type(raw_text),
         "vehicle_applications": vehicle_applications,
         "job_essentials": {
@@ -115,6 +115,31 @@ def build_report_draft(section: dict[str, Any]) -> dict[str, Any]:
         ],
     }
     return sanitize_public_payload(draft)
+
+
+def report_title(system_code: str, applications: list[dict[str, Any]]) -> str:
+    if not applications:
+        return f"{system_code} Vehicle Reference"
+    makes = sorted({str(item.get("make") or "").strip() for item in applications if item.get("make")})
+    models: list[str] = []
+    for item in applications:
+        model = str(item.get("model") or "").strip()
+        if model and model not in models:
+            models.append(model)
+    years = [
+        int(value)
+        for item in applications
+        for value in (item.get("year_from"), item.get("year_to"))
+        if isinstance(value, int)
+    ]
+    year_range = f"{min(years)}-{max(years)}" if years else ""
+    make_label = " / ".join(makes[:2])
+    if len(makes) > 2:
+        make_label += " +"
+    model_label = " / ".join(models[:4])
+    if len(models) > 4:
+        model_label += " +"
+    return " ".join(part for part in (year_range, make_label, model_label) if part).strip() or f"{system_code} Vehicle Reference"
 
 
 def normalize_system_code(value: str) -> str:

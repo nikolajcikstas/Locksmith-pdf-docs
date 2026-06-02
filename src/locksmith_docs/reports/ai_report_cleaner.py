@@ -1388,6 +1388,7 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
     mechanical = draft.get("mechanical_key") if isinstance(draft.get("mechanical_key"), dict) else {}
     key_remote = draft.get("key_remote") if isinstance(draft.get("key_remote"), dict) else {}
     transponder = draft.get("transponder") if isinstance(draft.get("transponder"), dict) else {}
+    programming = draft.get("programming") if isinstance(draft.get("programming"), dict) else {}
     known_options = key_remote.get("known_options") if isinstance(key_remote, dict) else []
     known_options = known_options if isinstance(known_options, list) else []
     applications = draft.get("vehicle_applications") if isinstance(draft.get("vehicle_applications"), list) else []
