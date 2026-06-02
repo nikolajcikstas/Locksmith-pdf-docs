@@ -276,6 +276,79 @@ def render_standard_mechanical_diagram(system: Mapping[str, Any]) -> str:
     """
 
 
+def render_standard_lock_position_diagram(system: Mapping[str, Any], assets: Sequence[Mapping[str, Any]]) -> str:
+    """Render the standard HU66 lock-position map when verified report facts support it."""
+    diagrams = system.get("procedure_diagrams")
+    if isinstance(diagrams, Sequence) and not isinstance(diagrams, (str, bytes)):
+        for diagram in diagrams:
+            if isinstance(diagram, Mapping) and str(diagram.get("placement") or "") == "making_key":
+                return ""
+    for asset in assets if isinstance(assets, Sequence) and not isinstance(assets, (str, bytes)) else []:
+        if not isinstance(asset, Mapping) or str(asset.get("placement") or "") != "making_key":
+            continue
+        text = " ".join(str(asset.get(key) or "") for key in ("title", "rewritten_caption", "public_path")).lower()
+        if any(token in text for token in ("position", "pin", "lock")):
+            return ""
+    mechanical = system.get("mechanical_key") if isinstance(system.get("mechanical_key"), Mapping) else {}
+    profile = " ".join(
+        str(value or "")
+        for value in (
+            mechanical.get("test_key"),
+            mechanical.get("ilco_keyway"),
+            (system.get("transponder") or {}).get("test_key") if isinstance(system.get("transponder"), Mapping) else "",
+        )
+    ).upper()
+    if "HU66" not in profile:
+        return ""
+    source_text = " ".join(
+        str(value or "")
+        for value in (
+            jsonish_text(system.get("making_key")),
+            jsonish_text(system.get("source_facts")),
+            jsonish_text(system.get("job_essentials")),
+        )
+    ).upper()
+    if not any(token in source_text for token in ("DOOR", "IGNITION", "GLOVE", "TRUNK", "HATCH")):
+        return ""
+    schema = {
+        "title": "HU66 lock-position guide",
+        "placement": "making_key",
+        "caption": "HU66 lock-position guide redrawn from verified operational data. Filled markers show which cut positions each lock uses.",
+        "key_orientation": "bow_left_tip_right",
+        "panels": [
+            {
+                "label": "Lock positions used while decoding",
+                "columns": ["1", "2", "3", "4", "5", "6", "7", "8"],
+                "rows": [
+                    ["Ignition", "filled", "filled", "filled", "filled", "filled", "filled", "filled", "filled"],
+                    ["Doors / trunk / hatch", "filled", "filled", "filled", "filled", "filled", "filled", "filled", "filled"],
+                    ["Glove box", "", "", "", "filled", "filled", "filled", "", ""],
+                ],
+                "note": "* Glove box position map applies only when equipped.",
+            }
+        ],
+    }
+    svg = render_original_diagram_svg(schema)
+    if not svg:
+        return ""
+    return f"""
+    <div class="asset-strip diagram-strip">
+      <figure class="asset-card inline-asset inline-diagram">
+        <div class="diagram-frame">{svg}</div>
+        <figcaption>{esc(schema["caption"])}</figcaption>
+      </figure>
+    </div>
+    """
+
+
+def jsonish_text(value: Any) -> str:
+    if isinstance(value, Mapping):
+        return " ".join(jsonish_text(item) for item in value.values())
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return " ".join(jsonish_text(item) for item in value)
+    return str(value or "")
+
+
 def panel(title: str, content: str, extra_class: str = "") -> str:
     if not content.strip():
         return ""
@@ -390,7 +463,7 @@ def render_vehicle_report(vehicle: Mapping[str, Any], system: Mapping[str, Any],
         {panel("Programming / Diagnostic", programming_html + render_asset_cards(assets, "programming") + render_procedure_diagrams(system, "programming"))}
       </div>
 
-      {panel("Making a Working Key", making_html + render_asset_cards(assets, "making_key") + render_procedure_diagrams(system, "making_key"), "procedure-panel")}
+      {panel("Making a Working Key", making_html + render_asset_cards(assets, "making_key") + render_standard_lock_position_diagram(system, assets) + render_procedure_diagrams(system, "making_key"), "procedure-panel")}
       {panel("Decoders / Readers", render_records_table([("tool", "Tool"), ("reference", "Reference")], system.get("decoders") or []))}
 
       {panel("Field Notes", render_list(making_key.get("field_notes") or []))}
