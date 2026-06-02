@@ -368,5 +368,294 @@
         }
       ]
     }
+  },
+  {
+    "system_code": "AV-8",
+    "source_document": "Audi-VW-Porsche.pdf",
+    "source_pages": [
+      18,
+      19
+    ],
+    "confidence": 0.6,
+    "ai_verified": true,
+    "publication_issues": [],
+    "draft": {
+      "code": "AV-8",
+      "title": "2015-2021 Audi A3 / Q3",
+      "system_type": "Proximity / Smart Key",
+      "vehicle_applications": [
+        {
+          "make": "Audi",
+          "model": "A3",
+          "year_from": 2015,
+          "year_to": 2021
+        },
+        {
+          "make": "Audi",
+          "model": "Q3",
+          "year_from": 2015,
+          "year_to": 2021
+        }
+      ],
+      "job_essentials": {
+        "Code series": "1-8110",
+        "Lishi / decoder": "Lishi: HU66v2",
+        "Frequency": "315 MHz",
+        "PIN": "Required",
+        "Programming path": "Use a supported programmer for the exact vehicle. PIN access is required or mentioned."
+      },
+      "quick_answer": [
+        "PIN access appears to be required or mentioned for this system.",
+        "Use the sections below to verify blade, FCC/frequency, programming path, decoder references, and final tests before releasing the vehicle."
+      ],
+      "key_remote": {
+        "remote_type": "Proximity fob",
+        "frequency": "315 MHz",
+        "known_options": [
+          {
+            "years": "2015-19",
+            "part": "8V0 837 220 E",
+            "fcc_id": "NBGFS12P71",
+            "frequency": "315 MHz"
+          },
+          {
+            "years": "2015-18",
+            "part": "8X0 837 220 A",
+            "fcc_id": "NBGFSI2P71",
+            "frequency": "315 MHz"
+          }
+        ]
+      },
+      "mechanical_key": {
+        "code_series": "1-8110",
+        "ilco_keyway": "HU66",
+        "spacing": {
+          "1": ".079",
+          "2": ".827",
+          "3": ".709",
+          "4": ".591",
+          "5": ".472",
+          "6": ".354",
+          "7": ".236",
+          "8": ".118"
+        },
+        "depths": {
+          "1": ".150",
+          "2": ".126",
+          "3": ".102",
+          "4": ".079"
+        },
+        "cutting_setup": {
+          "cut_track": "The left track contains the cuts.",
+          "guide_track": "The right track is used only as a guide/clearance track.",
+          "preparation": "Pre-cut the left track to all number 1 depths before applying the working-key cut values."
+        }
+      },
+      "transponder": {
+        "transponder_type": "Proximity",
+        "reusable": "No",
+        "test_key": "HU66",
+        "chip": "Megamos 49 AES"
+      },
+      "programming": {
+        "pin_required": "Yes",
+        "cloning": "Check source",
+        "tools": [
+          {
+            "name": "TCODE",
+            "status": "Check support"
+          },
+          {
+            "name": "MVP",
+            "status": "Check support"
+          },
+          {
+            "name": "TDB1000",
+            "status": "Check support"
+          },
+          {
+            "name": "Hotwire",
+            "status": "Check support"
+          },
+          {
+            "name": "Autel",
+            "status": "Check support"
+          }
+        ]
+      },
+      "making_key": {
+        "code_availability": "Use the blade, decoder, and method notes below to determine the working key path.",
+        "methods": [
+          "Remove the door cylinder only when decoding in-place is not practical, then decode the wafers/tumblers.",
+          "If the door does not provide enough information, use the trunk/hatch cylinder when the vehicle layout supports it."
+        ],
+        "field_workflow": [
+          {
+            "step": "Confirm vehicle match",
+            "detail": "Verify make, model, year, system code and trim before ordering parts."
+          },
+          {
+            "step": "Verify parts",
+            "detail": "Confirm FCC ID, frequency, button count and part number before programming."
+          },
+          {
+            "step": "Prepare access",
+            "detail": "Use a supported programmer for the exact vehicle. PIN access is required or mentioned."
+          },
+          {
+            "step": "Create mechanical key",
+            "detail": "Use approved blade, spacing, depths and decoder data from this report."
+          },
+          {
+            "step": "Program and test",
+            "detail": "Program the remote/transponder and test every customer-facing function before release."
+          }
+        ],
+        "field_notes": [
+          "Match FCC ID, frequency, button count, and part number before programming or selling a remote.",
+          "PIN access is mentioned for this system; confirm the PIN workflow before connecting a programmer.",
+          "VIN or dealer verification is mentioned; verify fitment before ordering key, fob, or proximity parts.",
+          "A lock reader/decoder path is available or referenced; use the listed decoder data before removing parts.",
+          "Door lock/cylinder information is relevant for making a working mechanical key.",
+          "Trunk or hatch lock information may help when the door lock does not provide enough usable cuts.",
+          "Reusable status is mentioned; verify whether used keys/fobs are allowed for this system.",
+          "Airbag or retainer safety language is present; follow safe removal procedure before servicing lock components."
+        ],
+        "service_notes": [
+          "Use this system record as the job control sheet: verify vehicle identity, blade data, remote/FCC data, and programmer support before work begins.",
+          "Mechanical key work should use the listed code series: 1-8110.",
+          "Use the spacing/depth data in the mechanical key section when cutting the blade; do not rely on screenshot tables.",
+          "For remote or proximity systems, verify FCC ID, frequency, button count, and part number before programming.",
+          "Check the transponder/chip section before choosing a reusable, clone, or program-new workflow.",
+          "PIN access is required or referenced; confirm the PIN source and programmer support before attempting programming.",
+          "Dealer or VIN verification is referenced; confirm exact part fitment before ordering.",
+          "When all keys are lost, decode the door lock/cylinder or use the listed lock reader path to recover cuts.",
+          "If supported by the vehicle, the trunk/hatch cylinder can be used as an alternate decoding source."
+        ]
+      },
+      "technician_checklist": {
+        "Bring to the job": [
+          "Supported programmer",
+          "Correct blade/keyway",
+          "PIN access if required"
+        ],
+        "Verify before ordering": [
+          "VIN-based part number",
+          "FCC ID",
+          "Frequency",
+          "Chip/transponder type"
+        ],
+        "Final tests": [
+          "Mechanical key operation",
+          "Remote lock/unlock",
+          "Start authorization",
+          "Trunk/remote start if equipped"
+        ]
+      },
+      "source_facts": {
+        "FCC IDs": [
+          "NBGFS12P71",
+          "NBGFSI2P71"
+        ],
+        "Frequencies": [
+          "315 MHz"
+        ],
+        "Blades / keyways": [
+          "HU66"
+        ],
+        "Programming tools": [
+          "TCODE",
+          "MVP",
+          "TDB1000",
+          "Hotwire",
+          "Autel"
+        ],
+        "Code series": [
+          "1-8110"
+        ]
+      },
+      "decoders": [
+        {
+          "tool": "Lishi",
+          "reference": "HU66v2"
+        }
+      ],
+      "troubleshooting": [
+        {
+          "issue": "Vehicle or trim mismatch",
+          "action": "Confirm make, model, year, system code, FCC/frequency, and VIN-based part fitment before ordering or programming."
+        },
+        {
+          "issue": "PIN access required",
+          "action": "Obtain or calculate the correct PIN before programming; stop if the tool cannot support the PIN workflow for this vehicle."
+        },
+        {
+          "issue": "Part number uncertainty",
+          "action": "Verify the remote or proximity fob by VIN when the source indicates dealer/VIN confirmation."
+        },
+        {
+          "issue": "Used remote or chip may fail",
+          "action": "Check reusable status before selling or programming a used fob/transponder."
+        },
+        {
+          "issue": "Column or lock removal risk",
+          "action": "Follow airbag and retainer safety steps before removing ignition or column components."
+        }
+      ],
+      "warnings": [
+        "Verify exact part numbers by VIN before ordering.",
+        "Confirm programmer support before connecting to the vehicle."
+      ],
+      "source_coverage": [
+        "Source coverage: pages 18-19."
+      ],
+      "procedure_diagrams": [
+        {
+          "title": "Lock positions",
+          "placement": "making_key",
+          "caption": "Key positions for various locks.",
+          "panels": [
+            {
+              "label": "Lock positions",
+              "columns": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8"
+              ],
+              "rows": [
+                [
+                  "Ignition",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled"
+                ],
+                [
+                  "Doors / trunk / hatch",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled"
+                ],
+                [
+                  "Glove box"
+                ]
+              ]
+            }
+          ]
+        }
+      ]
+    }
   }
 ]
