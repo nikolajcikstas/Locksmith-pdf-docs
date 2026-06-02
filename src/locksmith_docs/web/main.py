@@ -17,7 +17,7 @@ from locksmith_docs.billing.plans import PLANS, get_plan, subscription_bypass_en
 from locksmith_docs.billing.stripe_checkout import StripeNotConfigured, create_checkout_session
 from locksmith_docs.core.config import get_settings
 from locksmith_docs.db.init_schema import init_schema
-from locksmith_docs.db.report_seed import ensure_bundled_report_seed, export_published_report_seed
+from locksmith_docs.db.report_seed import ensure_bundled_parser_seed, ensure_bundled_report_seed, export_published_report_seed
 from locksmith_docs.db.repository import LocksmithRepository, VehicleQuery
 from locksmith_docs.processing.document_pipeline import refresh_verified_output, run_asset_import_job, run_asset_regeneration_job, run_full_catalog_index_job, run_owner_library_pipeline_job, run_pilot_import_job, run_publish_next_batch_job, run_rebuild_job, run_refresh_verified_output_job, run_reprocess_job, run_retry_rejected_reports_job, run_upload_job, save_uploaded_pdf, uploaded_pdf_paths
 from locksmith_docs.processing.job_status import latest_jobs, start_job
@@ -47,6 +47,7 @@ app.add_middleware(
 @app.on_event("startup")
 def ensure_database_schema() -> None:
     init_schema()
+    ensure_bundled_parser_seed()
     ensure_bundled_report_seed()
     if (settings.data_dir / "report_drafts.json").exists():
         refresh_verified_output()

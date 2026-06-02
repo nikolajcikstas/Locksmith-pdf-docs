@@ -18,6 +18,7 @@ from locksmith_docs.db.load_imported_pages import load_imported_pages
 from locksmith_docs.db.load_vehicle_candidates import main as load_vehicle_candidates_main
 from locksmith_docs.db.connection import get_connection
 from locksmith_docs.db.init_schema import init_schema
+from locksmith_docs.db.report_seed import ensure_bundled_parser_seed
 from locksmith_docs.db.repository import LocksmithRepository
 from locksmith_docs.processing.ai_text_cleaner import clean_page_with_ai
 from locksmith_docs.processing.job_status import has_running_job, update_job
@@ -589,19 +590,31 @@ def run_full_catalog_index_job(job_id: str) -> None:
 
 def run_owner_library_pipeline_job(job_id: str) -> None:
     paths = uploaded_pdf_paths()
-    if not paths:
-        update_job(job_id, "failed", "No stored PDFs found. Upload documents first.")
-        return
     try:
-        update_job(job_id, "running", f"Preparing {len(paths)} stored PDF(s): local OCR index first, no AI requests yet.")
-        indexed = index_all_uploaded_pdfs_without_ai(job_id=job_id)
-        update_job(
-            job_id,
-            "running",
-            f"Index ready: {indexed['vehicle_links']} vehicle link(s), {indexed['mapped_system_codes']} system(s). "
-            "Now verifying the next controlled report batch.",
-            **indexed,
-        )
+        if paths:
+            update_job(job_id, "running", f"Preparing {len(paths)} stored PDF(s): local OCR index first, no AI requests yet.")
+            indexed = index_all_uploaded_pdfs_without_ai(job_id=job_id)
+            update_job(
+                job_id,
+                "running",
+                f"Index ready: {indexed['vehicle_links']} vehicle link(s), {indexed['mapped_system_codes']} system(s). "
+                "Now verifying the next controlled report batch.",
+                **indexed,
+            )
+        else:
+            restored = ensure_bundled_parser_seed()
+            candidates_path = get_settings().data_dir / "parser_candidates.json"
+            if not candidates_path.exists():
+                update_job(job_id, "failed", "No stored PDFs or packaged OCR catalog found. Upload documents first.")
+                return
+            indexed = LocksmithRepository().dashboard_counts()
+            message = "Using packaged OCR catalog from deployment seed." if restored else "Using existing packaged OCR catalog."
+            update_job(
+                job_id,
+                "running",
+                f"{message} Now verifying the next controlled report batch.",
+                **indexed,
+            )
         result = rebuild_catalog(skip_ocr_pages=True, regenerate_assets=True, job_id=job_id)
         update_job(
             job_id,

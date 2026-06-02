@@ -13,6 +13,10 @@ def bundled_report_seed_path() -> Path:
     return get_settings().project_root / "seed" / "report_drafts.json"
 
 
+def bundled_parser_seed_path() -> Path:
+    return get_settings().project_root / "seed" / "parser_candidates.json"
+
+
 def ensure_bundled_report_seed() -> bool:
     """Restore approved report drafts packaged with the app image.
 
@@ -22,6 +26,18 @@ def ensure_bundled_report_seed() -> bool:
     settings = get_settings()
     destination = settings.data_dir / "report_drafts.json"
     source = bundled_report_seed_path()
+    if destination.exists() or not source.exists():
+        return False
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, destination)
+    return True
+
+
+def ensure_bundled_parser_seed() -> bool:
+    """Restore packaged OCR section candidates when source PDFs are not present."""
+    settings = get_settings()
+    destination = settings.data_dir / "parser_candidates.json"
+    source = bundled_parser_seed_path()
     if destination.exists() or not source.exists():
         return False
     destination.parent.mkdir(parents=True, exist_ok=True)
