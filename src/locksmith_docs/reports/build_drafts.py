@@ -10,7 +10,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Callable
 
-from locksmith_docs.reports.draft_builder import build_report_draft
+from locksmith_docs.reports.draft_builder import build_report_draft, report_title
 from locksmith_docs.parsing.section_vehicle_parser import extract_vehicle_applications_from_sections
 from locksmith_docs.reports.verified_facts import apply_verified_facts
 from locksmith_docs.reports.ai_report_cleaner import (
@@ -233,7 +233,7 @@ def build_drafts(
                     ai_verified = True
                 else:
                     cache.pop(key, None)
-        if not ai_verified and not rejected_cached and (request_limit == 0 or new_requests < request_limit):
+        if not ai_verified and not rejected_cached and request_limit > 0 and new_requests < request_limit:
             source_images = [
                 page_image_lookup[(str(section.get("source_document") or ""), page_number)]
                 for page_number in range(int(section.get("page_start") or 0), int(section.get("page_end") or 0) + 1)
@@ -245,6 +245,7 @@ def build_drafts(
                 new_requests += 1
                 processed_by_ai = True
         draft = apply_verified_facts(draft, str(draft.get("code") or ""), DEFAULT_VERIFIED_FACTS)
+        draft["title"] = report_title(str(draft.get("code") or ""), draft.get("vehicle_applications") or [])
         publication_issues = report_quality_issues(draft) + report_completeness_issues(draft, source_text)
         if rejected_cached:
             publication_issues.append("AI verification previously rejected this draft; excluded until it is reprocessed.")

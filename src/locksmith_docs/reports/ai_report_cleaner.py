@@ -260,6 +260,9 @@ def request_cleaned_report(
             suffix = f" API response: {detail}" if detail else ""
             raise RuntimeError(f"OpenAI report request failed (HTTP {exc.code}).{suffix}") from exc
         except (OSError, URLError, TimeoutError) as exc:
+            if attempt < retry_count:
+                time.sleep(min(30.0, 2.0 + attempt * 3.0))
+                continue
             raise RuntimeError("OpenAI report request did not complete because the API could not be reached.") from exc
         except json.JSONDecodeError as exc:
             raise RuntimeError("OpenAI returned a response envelope that could not be decoded as JSON.") from exc
@@ -843,6 +846,8 @@ def _is_clean_decoder_reference(value: str) -> bool:
     cleaned = str(value or "").strip().upper()
     if not cleaned or len(cleaned) > 20:
         return False
+    if cleaned in {"N/A", "NA", "NONE", "NO", "-", "--", "NIL", "NULL"}:
+        return False
     if re.search(r"[|:>]", cleaned):
         return False
     return not re.search(
@@ -1404,11 +1409,15 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
             issues.append(
                 f"Source lists {source_remote_count} remote options, but the structured table contains only {len(known_options)}."
             )
-    if re.search(r"\bLISHI\s*[:#]", source):
+    expected_decoders = _extract_decoder_rows(source_text)
+    expected_lishi = [
+        decoder for decoder in expected_decoders
+        if str(decoder.get("tool") or "").upper() == "LISHI"
+    ]
+    if expected_lishi:
         decoder_text = json.dumps(draft.get("decoders") or [], ensure_ascii=False).upper()
         if "LISHI" not in decoder_text:
             issues.append("Source includes a Lishi reference but the decoder table does not.")
-    expected_decoders = _extract_decoder_rows(source_text)
     if expected_decoders:
         decoder_text = json.dumps(draft.get("decoders") or [], ensure_ascii=False).upper()
         for decoder in expected_decoders:

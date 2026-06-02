@@ -33,6 +33,16 @@ def export_published_report_seed(path: Path | None = None) -> Path:
     settings = get_settings()
     destination = path or bundled_report_seed_path()
     destination.parent.mkdir(parents=True, exist_ok=True)
+    retained: dict[str, dict[str, Any]] = {}
+    if destination.exists():
+        try:
+            existing = json.loads(destination.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            existing = []
+        for item in existing if isinstance(existing, list) else []:
+            code = str(item.get("system_code") or "")
+            if code and item.get("ai_verified") and not item.get("publication_issues") and isinstance(item.get("draft"), dict):
+                retained[code] = item
     with get_connection() as conn:
         rows = conn.execute(
             """
@@ -45,8 +55,8 @@ def export_published_report_seed(path: Path | None = None) -> Path:
             ORDER BY system_code, source_document, source_pages
             """
         ).fetchall()
-    payload: list[dict[str, Any]] = [
-        {
+    for row in rows:
+        retained[row["system_code"]] = {
             "system_code": row["system_code"],
             "source_document": row["source_document"],
             "source_pages": row["source_pages"] or [],
@@ -55,7 +65,6 @@ def export_published_report_seed(path: Path | None = None) -> Path:
             "publication_issues": row["publication_issues"] or [],
             "draft": row["draft"] or {},
         }
-        for row in rows
-    ]
+    payload = [retained[code] for code in sorted(retained)]
     destination.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     return destination

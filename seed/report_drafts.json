@@ -657,5 +657,885 @@
         }
       ]
     }
+  },
+  {
+    "system_code": "GM-P10",
+    "source_document": "2021 AutoSmart Domestic US Book.pdf",
+    "source_pages": [
+      522,
+      522
+    ],
+    "confidence": 0.6,
+    "ai_verified": true,
+    "publication_issues": [],
+    "draft": {
+      "code": "GM-P10",
+      "title": "2015-2021 Cadillac Escalade / SRX / XT4",
+      "warnings": [
+        "Verify exact part numbers by VIN before ordering.",
+        "Confirm programmer support before connecting to the vehicle."
+      ],
+      "key_remote": {
+        "frequency": "315 MHz, 433 MHz",
+        "remote_type": "Proximity fob",
+        "known_options": [
+          {
+            "part": "13580812",
+            "fcc_id": "HYO2AB",
+            "buttons": "6",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "12598511",
+            "years": "2016-20",
+            "fcc_id": "HYQ2AB",
+            "buttons": "6"
+          },
+          {
+            "part": "13598525",
+            "fcc_id": "HYQ2AB",
+            "buttons": "3",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "13598526",
+            "fcc_id": "HYQ2AB",
+            "buttons": "5",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "13510246",
+            "fcc_id": "HYQ2EB",
+            "frequency": "433 MHz"
+          },
+          {
+            "part": "13510245",
+            "fcc_id": "HYQ2EB",
+            "frequency": "433 MHz"
+          },
+          {
+            "part": "13580794",
+            "fcc_id": "HYQ2EB",
+            "buttons": "6",
+            "frequency": "433 MHz"
+          },
+          {
+            "part": "13510245",
+            "buttons": "6",
+            "frequency": "433 MHz"
+          },
+          {
+            "part": "19598506",
+            "fcc_id": "HYQ2AB",
+            "buttons": "4",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "13510254",
+            "fcc_id": "HYQ2AB",
+            "buttons": "5",
+            "frequency": "315 MHz"
+          }
+        ]
+      },
+      "making_key": {
+        "methods": [
+          "Verify VIN-based key, fob, or proximity data with the dealer/source before ordering parts."
+        ],
+        "field_notes": [
+          "Match FCC ID, frequency, button count, and part number before programming or selling a remote.",
+          "VIN or dealer verification is mentioned; verify fitment before ordering key, fob, or proximity parts.",
+          "Door lock/cylinder information is relevant for making a working mechanical key.",
+          "Airbag or retainer safety language is present; follow safe removal procedure before servicing lock components."
+        ],
+        "service_notes": [
+          "Use this system record as the job control sheet: verify vehicle identity, blade data, remote/FCC data, and programmer support before work begins.",
+          "For remote or proximity systems, verify FCC ID, frequency, button count, and part number before programming.",
+          "Check the transponder/chip section before choosing a reusable, clone, or program-new workflow.",
+          "Dealer or VIN verification is referenced; confirm exact part fitment before ordering.",
+          "Lock part availability is mentioned; verify lock, cylinder, and pin-kit information before parts ordering."
+        ],
+        "field_workflow": [
+          {
+            "step": "Confirm vehicle match",
+            "detail": "Verify make, model, year, system code and trim before ordering parts."
+          },
+          {
+            "step": "Verify parts",
+            "detail": "Confirm FCC ID, frequency, button count and part number before programming."
+          },
+          {
+            "step": "Prepare access",
+            "detail": "Use a supported programmer for the exact vehicle."
+          },
+          {
+            "step": "Create mechanical key",
+            "detail": "Use approved blade, spacing, depths and decoder data from this report."
+          },
+          {
+            "step": "Program and test",
+            "detail": "Program the remote/transponder and test every customer-facing function before release."
+          }
+        ],
+        "code_availability": "Check source"
+      },
+      "programming": {
+        "cloning": "Check source",
+        "factory_tool": "Check source",
+        "pin_guidance": "Check source",
+        "pin_required": "Check source",
+        "tool_guidance": "Check source",
+        "system_requirement": "Check source"
+      },
+      "system_type": "Proximity / Smart Key",
+      "transponder": {
+        "chip": "Check source",
+        "reusable": "Check source",
+        "test_key": "Check source",
+        "transponder_type": "Proximity"
+      },
+      "quick_answer": [
+        "Use the sections below to verify blade, FCC/frequency, programming path, decoder references, and final tests before releasing the vehicle."
+      ],
+      "source_facts": {
+        "FCC IDs": [
+          "HYO2AB",
+          "HYQ2AB",
+          "HYQ2EB"
+        ],
+        "Frequencies": [
+          "315 MHz",
+          "433 MHz"
+        ],
+        "Part numbers": [
+          "12598511",
+          "13510242",
+          "13510245",
+          "13510246",
+          "13510254",
+          "13580794",
+          "13580812",
+          "13598506",
+          "13598525",
+          "13598526",
+          "13598528",
+          "19510245",
+          "19598506",
+          "5922070"
+        ],
+        "Blades / keyways": [
+          "PRX-CAD-3B1",
+          "PRX-CAD-584",
+          "PRX-CAD-5B3",
+          "PRX-CAD-5B4",
+          "PRX-CAD-5B5",
+          "PRX-CAD-6B2",
+          "PRX-CAD-AB1"
+        ]
+      },
+      "job_essentials": {
+        "PIN": "Check source",
+        "Frequency": "315 MHz, 433 MHz",
+        "Lishi / decoder": "Check source pages",
+        "Programming path": "Use a supported programmer for the exact vehicle.",
+        "Emergency blade / keyway": "5922070"
+      },
+      "mechanical_key": {
+        "macs": "V 001-5718 - 10 Cut",
+        "style": "Proximity",
+        "depths": {
+          "1": "0.115",
+          "2": "0.095",
+          "3": "0.075",
+          "4": "0.055"
+        },
+        "milling": "Strattec 5922070",
+        "spacing": {
+          "1": "1.098",
+          "2": "0.992",
+          "3": "0.686",
+          "4": "0.780",
+          "5": "0.673",
+          "6": "0.567",
+          "7": "0.461",
+          "8": "0.354"
+        },
+        "air_bags": "Check source",
+        "start_cut": "1.098",
+        "cut_to_cut": "0.142",
+        "ilco_keyway": "5922070",
+        "cutting_setup": {
+          "Curtis Clipper": "Mentioned in source; verify exact setup on source page during review."
+        },
+        "ignition_retainer": "Check source"
+      },
+      "source_coverage": [
+        "Source coverage: pages 522-522."
+      ],
+      "troubleshooting": [
+        {
+          "issue": "Vehicle or trim mismatch",
+          "action": "Confirm make, model, year, system code, FCC/frequency, and VIN-based part fitment before ordering or programming."
+        },
+        {
+          "issue": "Part number uncertainty",
+          "action": "Verify the remote or proximity fob by VIN when the source indicates dealer/VIN confirmation."
+        },
+        {
+          "issue": "Column or lock removal risk",
+          "action": "Follow airbag and retainer safety steps before removing ignition or column components."
+        }
+      ],
+      "procedure_diagrams": [
+        {
+          "title": "Lock Positions",
+          "panels": [
+            {
+              "rows": [
+                [
+                  "Ignition",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "Doors / trunk / hatch",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "Glove box",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              ],
+              "label": "Lock positions",
+              "columns": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8"
+              ]
+            }
+          ],
+          "caption": "Diagram showing lock positions for key making.",
+          "placement": "making_key"
+        }
+      ],
+      "technician_checklist": {
+        "Final tests": [
+          "Mechanical key operation",
+          "Remote lock/unlock",
+          "Start authorization",
+          "Trunk/remote start if equipped"
+        ],
+        "Bring to the job": [
+          "Supported programmer",
+          "Correct blade/keyway",
+          "PIN access if required"
+        ],
+        "Verify before ordering": [
+          "VIN-based part number",
+          "FCC ID",
+          "Frequency",
+          "Chip/transponder type"
+        ]
+      },
+      "vehicle_applications": [
+        {
+          "make": "Cadillac",
+          "model": "Escalade",
+          "year_to": 2020,
+          "year_from": 2015
+        },
+        {
+          "make": "Cadillac",
+          "model": "SRX",
+          "year_to": 2016,
+          "year_from": 2015
+        },
+        {
+          "make": "Cadillac",
+          "model": "XT4",
+          "year_to": 2021,
+          "year_from": 2019
+        }
+      ]
+    }
+  },
+  {
+    "system_code": "HK-41",
+    "source_document": "2021 AutoSmart ASIAN Book.pdf",
+    "source_pages": [
+      210,
+      210
+    ],
+    "confidence": 0.6,
+    "ai_verified": true,
+    "publication_issues": [],
+    "draft": {
+      "code": "HK-41",
+      "title": "2008-2014 Hyundai / Kia Sorento / Optima / Rio / Elantra Touring +",
+      "warnings": [
+        "Verify exact part numbers by VIN before ordering.",
+        "Confirm programmer support before connecting to the vehicle."
+      ],
+      "key_remote": {
+        "fcc_id": "OSLOKA-860T",
+        "frequency": "315 MHz",
+        "remote_type": "Remote",
+        "known_options": [
+          {
+            "part": "95430-21300",
+            "fcc_id": "PINHA-TO08",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "95430-21350",
+            "fcc_id": "PINHA-T008",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "95430-26202",
+            "fcc_id": "OSLOKA-3I0T"
+          },
+          {
+            "part": "95430-16000",
+            "fcc_id": "PLNHM-T002"
+          },
+          {
+            "part": "95430-16012",
+            "fcc_id": "PINHA-T036",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "95430-10000",
+            "fcc_id": "PINHA-T036",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "95430-28201"
+          }
+        ]
+      },
+      "making_key": {
+        "methods": [
+          "Verify keyway and system data, then decode an accessible lock or use the listed source method for the vehicle."
+        ],
+        "field_notes": [
+          "Match FCC ID, frequency, button count, and part number before programming or selling a remote.",
+          "PIN access is mentioned for this system; confirm the PIN workflow before connecting a programmer.",
+          "Airbag or retainer safety language is present; follow safe removal procedure before servicing lock components."
+        ],
+        "service_notes": [
+          "Use this system record as the job control sheet: verify vehicle identity, blade data, remote/FCC data, and programmer support before work begins.",
+          "For remote or proximity systems, verify FCC ID, frequency, button count, and part number before programming.",
+          "Check the transponder/chip section before choosing a reusable, clone, or program-new workflow.",
+          "PIN access is required or referenced; confirm the PIN source and programmer support before attempting programming."
+        ],
+        "field_workflow": [
+          {
+            "step": "Confirm vehicle match",
+            "detail": "Verify make, model, year, system code and trim before ordering parts."
+          },
+          {
+            "step": "Verify parts",
+            "detail": "Confirm FCC ID, frequency, button count and part number before programming."
+          },
+          {
+            "step": "Prepare access",
+            "detail": "Use a supported programmer for the exact vehicle. PIN access is required or mentioned."
+          },
+          {
+            "step": "Create mechanical key",
+            "detail": "Use approved blade, spacing, depths and decoder data from this report."
+          },
+          {
+            "step": "Program and test",
+            "detail": "Program the remote/transponder and test every customer-facing function before release."
+          }
+        ],
+        "code_availability": "Use the blade, decoder, and method notes below to determine the working key path."
+      },
+      "programming": {
+        "cloning": "Check source",
+        "factory_tool": "Check source",
+        "pin_required": "Yes"
+      },
+      "system_type": "Transponder Key",
+      "transponder": {
+        "transponder_type": "Transponder"
+      },
+      "quick_answer": [
+        "FCC ID detected: OSLOKA-860T.",
+        "PIN access appears to be required or mentioned for this system.",
+        "Use the sections below to verify blade, FCC/frequency, programming path, decoder references, and final tests before releasing the vehicle."
+      ],
+      "source_facts": {
+        "FCC IDs": [
+          "OSLOKA-3I0T",
+          "OSLOKA-860T",
+          "PINHA-T008",
+          "PINHA-T036",
+          "PINHA-TO08",
+          "PLNHM-T002"
+        ],
+        "Frequencies": [
+          "315 MHz"
+        ],
+        "Part numbers": [
+          "95430-10000",
+          "95430-16000",
+          "95430-16012",
+          "95430-21300",
+          "95430-21350",
+          "95430-26202",
+          "95430-28201"
+        ],
+        "Blades / keyways": [
+          "TOY48"
+        ]
+      },
+      "job_essentials": {
+        "PIN": "Required",
+        "FCC ID": "OSLOKA-860T",
+        "Frequency": "315 MHz",
+        "Lishi / decoder": "Check source pages",
+        "Programming path": "Use a supported programmer for the exact vehicle. PIN access is required or mentioned."
+      },
+      "mechanical_key": {
+        "macs": "KEorE1-2500",
+        "style": "TOY48",
+        "depths": {
+          "1": "na",
+          "2": "na",
+          "3": "na",
+          "4": "na"
+        },
+        "milling": "nfa",
+        "spacing": {
+          "1": "2",
+          "2": ">",
+          "3": "Mike's Tip: A few models have been found to have different keyway and locks installed from the factory.",
+          "4": "es",
+          "5": "2",
+          "6": "a",
+          "7": "ie",
+          "8": "crea"
+        },
+        "air_bags": "Yes",
+        "start_cut": "5",
+        "cut_to_cut": "na",
+        "ilco_keyway": "TOY48",
+        "ignition_retainer": "Active"
+      },
+      "source_coverage": [
+        "Source coverage: pages 210-210."
+      ],
+      "troubleshooting": [
+        {
+          "issue": "Vehicle or trim mismatch",
+          "action": "Confirm make, model, year, system code, FCC/frequency, and VIN-based part fitment before ordering or programming."
+        },
+        {
+          "issue": "PIN access required",
+          "action": "Obtain or calculate the correct PIN before programming; stop if the tool cannot support the PIN workflow for this vehicle."
+        },
+        {
+          "issue": "Column or lock removal risk",
+          "action": "Follow airbag and retainer safety steps before removing ignition or column components."
+        }
+      ],
+      "procedure_diagrams": [
+        {
+          "title": "Lock Positions",
+          "panels": [
+            {
+              "rows": [
+                [
+                  "Ignition",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "Doors / trunk / hatch",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "Glove box",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              ],
+              "label": "Lock positions",
+              "columns": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8"
+              ]
+            }
+          ],
+          "caption": "Lock positions for key making.",
+          "placement": "making_key"
+        }
+      ],
+      "technician_checklist": {
+        "Final tests": [
+          "Mechanical key operation",
+          "Remote lock/unlock",
+          "Start authorization",
+          "Trunk/remote start if equipped"
+        ],
+        "Bring to the job": [
+          "Supported programmer",
+          "Correct blade/keyway",
+          "PIN access if required"
+        ],
+        "Verify before ordering": [
+          "VIN-based part number",
+          "FCC ID",
+          "Frequency",
+          "Chip/transponder type"
+        ]
+      },
+      "vehicle_applications": [
+        {
+          "make": "Kia",
+          "model": "Sorento",
+          "year_to": 2012,
+          "year_from": 2010
+        },
+        {
+          "make": "Kia",
+          "model": "Optima",
+          "year_to": 2013,
+          "year_from": 2010
+        },
+        {
+          "make": "Kia",
+          "model": "Rio",
+          "year_to": 2011,
+          "year_from": 2010
+        },
+        {
+          "make": "Hyundai",
+          "model": "Elantra Touring",
+          "year_to": 2012,
+          "year_from": 2008
+        },
+        {
+          "make": "Hyundai",
+          "model": "Tucson",
+          "year_to": 2014,
+          "year_from": 2011
+        }
+      ]
+    }
+  },
+  {
+    "system_code": "HON-R15",
+    "source_document": "2021 AutoSmart ASIAN Book.pdf",
+    "source_pages": [
+      80,
+      80
+    ],
+    "confidence": 0.6,
+    "ai_verified": true,
+    "publication_issues": [],
+    "draft": {
+      "code": "HON-R15",
+      "title": "1990-1999 Acura Integra / Legend / Vigor / NSX +",
+      "warnings": [
+        "Verify exact part numbers by VIN before ordering.",
+        "Confirm programmer support before connecting to the vehicle."
+      ],
+      "key_remote": {
+        "frequency": "434 MHz",
+        "remote_type": "Remote",
+        "known_options": [
+          {
+            "part": "72147-S37-A01",
+            "years": "1996-01",
+            "frequency": "434 MHz"
+          },
+          {
+            "part": "72147-825-A01",
+            "years": "1996-98"
+          }
+        ]
+      },
+      "making_key": {
+        "field_notes": [
+          "Match FCC ID, frequency, button count, and part number before programming or selling a remote.",
+          "A lock reader/decoder path is available or referenced; use the listed decoder data before removing parts.",
+          "Airbag or retainer safety language is present; follow safe removal procedure before servicing lock components."
+        ],
+        "service_notes": [
+          "Use this system record as the job control sheet: verify vehicle identity, blade data, remote/FCC data, and programmer support before work begins.",
+          "Mechanical key work should use the listed code series: 5001-8442.",
+          "Use the spacing/depth data in the mechanical key section when cutting the blade; do not rely on screenshot tables.",
+          "For remote or proximity systems, verify FCC ID, frequency, button count, and part number before programming.",
+          "Check the transponder/chip section before choosing a reusable, clone, or program-new workflow.",
+          "Lock part availability is mentioned; verify lock, cylinder, and pin-kit information before parts ordering."
+        ],
+        "field_workflow": [
+          {
+            "step": "Confirm vehicle match",
+            "detail": "Verify make, model, year, system code and trim before ordering parts."
+          },
+          {
+            "step": "Verify parts",
+            "detail": "Confirm FCC ID, frequency, button count and part number before programming."
+          },
+          {
+            "step": "Prepare access",
+            "detail": "Use a supported programmer for the exact vehicle."
+          },
+          {
+            "step": "Create mechanical key",
+            "detail": "Use approved blade, spacing, depths and decoder data from this report."
+          },
+          {
+            "step": "Program and test",
+            "detail": "Program the remote/transponder and test every customer-facing function before release."
+          }
+        ],
+        "code_availability": "Use the blade, decoder, and method notes below to determine the working key path."
+      },
+      "programming": {
+        "cloning": "Check source",
+        "pin_required": "Check source"
+      },
+      "system_type": "Transponder Key",
+      "transponder": {
+        "transponder_type": "Transponder"
+      },
+      "quick_answer": [
+        "Use the sections below to verify blade, FCC/frequency, programming path, decoder references, and final tests before releasing the vehicle."
+      ],
+      "source_facts": {
+        "Code series": [
+          "5001-8442"
+        ],
+        "Frequencies": [
+          "434 MHz"
+        ],
+        "Part numbers": [
+          "72147-825-A01",
+          "72147-S37-A01"
+        ],
+        "Blades / keyways": [
+          "HD12x"
+        ]
+      },
+      "job_essentials": {
+        "PIN": "Check source",
+        "Frequency": "434 MHz",
+        "Code series": "5001-8442",
+        "Lishi / decoder": "Check source pages",
+        "Programming path": "Use a supported programmer for the exact vehicle."
+      },
+      "mechanical_key": {
+        "macs": "s001-8442",
+        "style": "master",
+        "depths": {
+          "1": ".307",
+          "2": ".294",
+          "3": ".282",
+          "4": ".269"
+        },
+        "spacing": {
+          "1": ".108",
+          "2": ".192",
+          "3": ".277",
+          "4": ".361",
+          "5": ".446",
+          "6": ".530",
+          "7": ".615",
+          "8": ".699"
+        },
+        "air_bags": "NO TRANSPONDER",
+        "start_cut": ".307",
+        "cut_to_cut": ".0845",
+        "code_series": "5001-8442",
+        "ilco_keyway": "HD12x",
+        "cutting_setup": {
+          "Pak-A-Punch": "Mentioned in source; verify exact setup on source page during review.",
+          "Curtis Clipper": "Mentioned in source; verify exact setup on source page during review."
+        },
+        "ignition_retainer": "HD12x"
+      },
+      "source_coverage": [
+        "Source coverage: pages 80-80."
+      ],
+      "troubleshooting": [
+        {
+          "issue": "Vehicle or trim mismatch",
+          "action": "Confirm make, model, year, system code, FCC/frequency, and VIN-based part fitment before ordering or programming."
+        },
+        {
+          "issue": "Column or lock removal risk",
+          "action": "Follow airbag and retainer safety steps before removing ignition or column components."
+        }
+      ],
+      "procedure_diagrams": [
+        {
+          "panels": [
+            {
+              "rows": [
+                [
+                  "Ignition",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "Doors / trunk / hatch",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "Glove box",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              ],
+              "label": "Lock positions",
+              "columns": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8"
+              ]
+            }
+          ],
+          "caption": "Lock positions",
+          "placement": "making_key"
+        }
+      ],
+      "technician_checklist": {
+        "Final tests": [
+          "Mechanical key operation",
+          "Remote lock/unlock",
+          "Start authorization",
+          "Trunk/remote start if equipped"
+        ],
+        "Bring to the job": [
+          "Supported programmer",
+          "Correct blade/keyway",
+          "PIN access if required"
+        ],
+        "Verify before ordering": [
+          "VIN-based part number",
+          "FCC ID",
+          "Frequency",
+          "Chip/transponder type"
+        ]
+      },
+      "vehicle_applications": [
+        {
+          "make": "Acura",
+          "model": "Integra",
+          "year_to": 1999,
+          "year_from": 1990
+        },
+        {
+          "make": "Acura",
+          "model": "Legend",
+          "year_to": 1996,
+          "year_from": 1990
+        },
+        {
+          "make": "Acura",
+          "model": "Vigor",
+          "year_to": 1998,
+          "year_from": 1995
+        },
+        {
+          "make": "Acura",
+          "model": "NSX",
+          "year_to": 1996,
+          "year_from": 1991
+        },
+        {
+          "make": "Acura",
+          "model": "TL",
+          "year_to": 1998,
+          "year_from": 1995
+        },
+        {
+          "make": "Acura",
+          "model": "Vigor",
+          "year_to": 1996,
+          "year_from": 1991
+        }
+      ]
+    }
   }
 ]
