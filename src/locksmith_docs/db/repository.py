@@ -167,9 +167,19 @@ class LocksmithRepository:
 
     def find_vehicle_best_effort(self, query: VehicleQuery) -> dict[str, Any] | None:
         exact = self.find_vehicle(query)
+        if exact and self.get_system(exact["system_code"]):
+            return exact
+        published_exact = self.find_published_vehicle_match(query)
+        if published_exact:
+            return published_exact
         if exact:
             return exact
         display_match = self.find_vehicle_by_display_model(query)
+        if display_match and self.get_system(display_match["system_code"]):
+            return display_match
+        published_display = self.find_published_vehicle_match(query, display_model=True)
+        if published_display:
+            return published_display
         if display_match:
             return display_match
         with get_connection() as conn:
@@ -187,6 +197,30 @@ class LocksmithRepository:
                 """,
                 (query.make, query.model, query.year, query.year, query.year),
             ).fetchone()
+
+    def find_published_vehicle_match(self, query: VehicleQuery, display_model: bool = False) -> dict[str, Any] | None:
+        with get_connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT va.*
+                FROM vehicle_applications va
+                JOIN systems s ON s.code = va.system_code
+                 AND s.status = 'approved'
+                 AND s.publication_source = 'ai_verified'
+                WHERE lower(va.make) = lower(%s)
+                ORDER BY
+                  CASE WHEN va.year_from <= %s AND va.year_to >= %s THEN 0 ELSE 1 END,
+                  abs(va.year_from - %s) ASC,
+                  va.year_to DESC
+                """,
+                (query.make, query.year, query.year, query.year),
+            ).fetchall()
+        wanted = query.model.casefold()
+        for row in rows:
+            model = clean_model_for_display(query.make, row["model"]) if display_model else row["model"]
+            if str(model or "").casefold() == wanted:
+                return row
+        return None
 
     def find_vehicle_by_display_model(self, query: VehicleQuery) -> dict[str, Any] | None:
         with get_connection() as conn:
