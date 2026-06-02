@@ -86,3 +86,13 @@ def latest_jobs(limit: int = 6) -> list[dict[str, Any]]:
     if changed:
         save_jobs(jobs)
     return list(reversed(jobs))[:limit]
+
+
+def has_running_job(*kinds: str) -> bool:
+    wanted = {kind for kind in kinds if kind}
+    for job in load_jobs():
+        if job.get("status") != "running":
+            continue
+        if not wanted or str(job.get("kind") or "") in wanted:
+            return True
+    return False

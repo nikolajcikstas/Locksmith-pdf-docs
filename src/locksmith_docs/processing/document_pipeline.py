@@ -20,7 +20,7 @@ from locksmith_docs.db.connection import get_connection
 from locksmith_docs.db.init_schema import init_schema
 from locksmith_docs.db.repository import LocksmithRepository
 from locksmith_docs.processing.ai_text_cleaner import clean_page_with_ai
-from locksmith_docs.processing.job_status import update_job
+from locksmith_docs.processing.job_status import has_running_job, update_job
 from locksmith_docs.reports.ai_report_cleaner import report_completeness_issues, report_quality_issues, require_report_ai_access, sanitize_structured_sections
 from locksmith_docs.reports.build_drafts import import_to_database as import_report_drafts_to_database
 from locksmith_docs.reports.build_drafts import main as build_drafts_main
@@ -255,14 +255,15 @@ def rebuild_catalog(
             update_job(job_id, "running", "Saving OCR pages and preparing vehicle mappings.")
         load_imported_pages()
 
-    run_module("locksmith_docs.parsing.build_candidates")
-
     original_argv = sys.argv[:]
-    try:
-        sys.argv = ["load_vehicle_candidates", "--replace-source-docs", "--approve-min-confidence", "0.90"]
-        load_vehicle_candidates_main()
-    finally:
-        sys.argv = original_argv
+    candidates_path = get_settings().data_dir / "parser_candidates.json"
+    if not skip_ocr_pages or not candidates_path.exists():
+        run_module("locksmith_docs.parsing.build_candidates")
+        try:
+            sys.argv = ["load_vehicle_candidates", "--replace-source-docs", "--approve-min-confidence", "0.90"]
+            load_vehicle_candidates_main()
+        finally:
+            sys.argv = original_argv
 
     try:
         # Generate and validate first; a failed AI pass must not erase the last usable catalog.
@@ -636,6 +637,13 @@ def run_rebuild_job(job_id: str, target_system_code: str | None = None) -> None:
 def run_publish_next_batch_job(job_id: str) -> None:
     """Publish the next budget-limited queued reports after the catalog is indexed."""
     try:
+        if has_running_job("upload", "reprocess", "index", "pipeline"):
+            update_job(
+                job_id,
+                "failed",
+                "A document OCR/index job is still running. Publish a selected report from the existing index, or wait for indexing to finish.",
+            )
+            return
         update_job(job_id, "running", "Verifying the next queued report batch from saved OCR pages.")
         result = rebuild_catalog(skip_ocr_pages=True, regenerate_assets=True, job_id=job_id)
         update_job(
