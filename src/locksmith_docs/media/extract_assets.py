@@ -474,7 +474,7 @@ def render_original_diagram_svg(schema: dict[str, Any]) -> str:
         schema.get("key_orientation") == "bow_left_tip_right"
         or is_lock_position_panel(panels[0])
     ):
-        return render_integrated_key_position_svg(panels[0])
+        return render_integrated_key_position_svg(panels[0], schema)
     margin = 24
     width = 920
     panel_width = width - margin * 2
@@ -557,8 +557,21 @@ def is_lock_position_panel(panel: dict[str, Any]) -> bool:
     return "IGNITION" in text and any(token in text for token in ("DOOR", "TRUNK", "HATCH"))
 
 
-def render_integrated_key_position_svg(panel: dict[str, Any]) -> str:
+def render_integrated_key_position_svg(panel: dict[str, Any], schema: dict[str, Any] | None = None) -> str:
     """Render a redrawn key-shaped position map without publishing source pixels."""
+    schema = schema or {}
+    profile = clean_svg_text(
+        str(
+            schema.get("blade_profile")
+            or schema.get("keyway")
+            or schema.get("profile")
+            or "Mechanical key"
+        )
+    )[:32]
+    title = clean_svg_text(str(schema.get("title") or f"{profile} lock-position guide"))[:58]
+    subtitle = clean_svg_text(
+        str(schema.get("subtitle") or f"{profile} position map. Read positions from handle to tip.")
+    )[:92]
     width = 1120
     height = 360
     rows = [
@@ -575,8 +588,8 @@ def render_integrated_key_position_svg(panel: dict[str, Any]) -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img">',
         '<rect width="100%" height="100%" rx="20" fill="#f7fafb"/>',
         '<style>text{font-family:Arial,sans-serif;fill:#142536}.title{font-size:21px;font-weight:700}.sub{font-size:13px;fill:#526477}.num{font-size:14px;font-weight:700;fill:#526477}.legend{font-size:13px;font-weight:700}.note{font-size:13px;fill:#526477}.outline{stroke:#264456;stroke-width:2.4}.guide{stroke:#d3dfe4;stroke-width:1}.head{fill:#142d3c}.hole{fill:#f7fafb}</style>',
-        '<text class="title" x="34" y="40">HU66 lock-position guide</text>',
-        '<text class="sub" x="34" y="62">Internal-milled mechanical key. Read positions from handle to tip.</text>',
+        f'<text class="title" x="34" y="40">{xml_escape(title)}</text>',
+        f'<text class="sub" x="34" y="62">{xml_escape(subtitle)}</text>',
         # Compact legend in one visual line.
         f'<circle cx="582" cy="38" r="7" fill="{colors[0]}"/><text class="legend" x="598" y="43">Ignition</text>',
         f'<circle cx="690" cy="38" r="7" fill="{colors[1]}"/><text class="legend" x="706" y="43">Doors / trunk / hatch</text>',

@@ -136,7 +136,7 @@ def render_cut_position_map(rows: Sequence[Mapping[str, Any]]) -> str:
     """
 
 
-def render_asset_cards(assets: Sequence[Mapping[str, Any]], placement: str) -> str:
+def render_asset_cards(assets: Sequence[Mapping[str, Any]], placement: str, system: Mapping[str, Any] | None = None) -> str:
     cards = []
     for asset in assets if isinstance(assets, Sequence) and not isinstance(assets, (str, bytes)) else []:
         if not isinstance(asset, Mapping):
@@ -145,7 +145,16 @@ def render_asset_cards(assets: Sequence[Mapping[str, Any]], placement: str) -> s
             continue
         if (asset.get("placement") or "") != placement:
             continue
-        embedded_svg = inline_svg_from_public_path(str(asset.get("public_path") or ""))
+        diagram_data = asset.get("diagram_data") if isinstance(asset.get("diagram_data"), Mapping) else {}
+        embedded_svg = ""
+        if diagram_data:
+            schema = enrich_diagram_schema_for_system(dict(diagram_data), system or {}, placement)
+            embedded_svg = render_original_diagram_svg(schema)
+            caption = str(schema.get("caption") or schema.get("title") or asset.get("rewritten_caption") or asset.get("title") or "Procedure image")
+        else:
+            caption = str(asset.get("rewritten_caption") or asset.get("title") or "Procedure image")
+        if not embedded_svg:
+            embedded_svg = inline_svg_from_public_path(str(asset.get("public_path") or ""))
         visual = (
             f'<div class="diagram-frame">{embedded_svg}</div>'
             if embedded_svg
@@ -155,13 +164,27 @@ def render_asset_cards(assets: Sequence[Mapping[str, Any]], placement: str) -> s
             f"""
             <figure class="asset-card inline-asset">
               {visual}
-              <figcaption>{esc(asset.get('rewritten_caption') or asset.get('title', 'Procedure image'))}</figcaption>
+              <figcaption>{esc(caption)}</figcaption>
             </figure>
             """
         )
     if not cards:
         return ""
     return f'<div class="asset-strip">{"".join(cards)}</div>'
+
+
+def enrich_diagram_schema_for_system(schema: dict[str, Any], system: Mapping[str, Any], placement: str) -> dict[str, Any]:
+    if placement != "making_key":
+        return schema
+    profile = mechanical_profile(system)
+    if not profile:
+        return schema
+    schema.setdefault("blade_profile", profile)
+    title_text = str(schema.get("title") or "").strip().lower()
+    if not title_text or "lock" in title_text or "position" in title_text:
+        schema["title"] = f"{profile} lock-position guide"
+        schema.setdefault("subtitle", f"{profile} position map. Read positions from handle to tip.")
+    return schema
 
 
 def inline_svg_from_public_path(public_path: str) -> str:
@@ -209,7 +232,8 @@ def render_procedure_diagrams(system: Mapping[str, Any], placement: str) -> str:
             continue
         if str(diagram.get("placement") or "") != placement:
             continue
-        svg = render_original_diagram_svg(dict(diagram))
+        schema = enrich_diagram_schema_for_system(dict(diagram), system, placement)
+        svg = render_original_diagram_svg(schema)
         caption = str(diagram.get("caption") or diagram.get("title") or "Procedure reference").strip()
         cards.append(
             f"""
@@ -222,6 +246,20 @@ def render_procedure_diagrams(system: Mapping[str, Any], placement: str) -> str:
     if not cards:
         return ""
     return f'<div class="asset-strip diagram-strip">{"".join(cards)}</div>'
+
+
+def mechanical_profile(system: Mapping[str, Any]) -> str:
+    mechanical = system.get("mechanical_key") if isinstance(system.get("mechanical_key"), Mapping) else {}
+    transponder = system.get("transponder") if isinstance(system.get("transponder"), Mapping) else {}
+    profile = str(
+        mechanical.get("test_key")
+        or mechanical.get("ilco_keyway")
+        or transponder.get("test_key")
+        or ""
+    ).strip()
+    if "/" in profile:
+        profile = " / ".join(part.strip() for part in profile.split("/")[:2] if part.strip())
+    return profile[:36]
 
 
 def render_standard_mechanical_diagram(system: Mapping[str, Any]) -> str:
@@ -276,69 +314,16 @@ def render_standard_mechanical_diagram(system: Mapping[str, Any]) -> str:
     """
 
 
-def render_standard_lock_position_diagram(system: Mapping[str, Any], assets: Sequence[Mapping[str, Any]]) -> str:
-    """Render the standard HU66 lock-position map when verified report facts support it."""
-    diagrams = system.get("procedure_diagrams")
-    if isinstance(diagrams, Sequence) and not isinstance(diagrams, (str, bytes)):
-        for diagram in diagrams:
-            if isinstance(diagram, Mapping) and str(diagram.get("placement") or "") == "making_key":
-                return ""
+def has_mechanical_diagram_asset(assets: Sequence[Mapping[str, Any]]) -> bool:
     for asset in assets if isinstance(assets, Sequence) and not isinstance(assets, (str, bytes)) else []:
-        if not isinstance(asset, Mapping) or str(asset.get("placement") or "") != "making_key":
+        if not isinstance(asset, Mapping) or str(asset.get("placement") or "") != "mechanical_key":
             continue
         text = " ".join(str(asset.get(key) or "") for key in ("title", "rewritten_caption", "public_path")).lower()
-        if any(token in text for token in ("position", "pin", "lock")):
-            return ""
-    mechanical = system.get("mechanical_key") if isinstance(system.get("mechanical_key"), Mapping) else {}
-    profile = " ".join(
-        str(value or "")
-        for value in (
-            mechanical.get("test_key"),
-            mechanical.get("ilco_keyway"),
-            (system.get("transponder") or {}).get("test_key") if isinstance(system.get("transponder"), Mapping) else "",
-        )
-    ).upper()
-    if "HU66" not in profile:
-        return ""
-    source_text = " ".join(
-        str(value or "")
-        for value in (
-            jsonish_text(system.get("making_key")),
-            jsonish_text(system.get("source_facts")),
-            jsonish_text(system.get("job_essentials")),
-        )
-    ).upper()
-    if not any(token in source_text for token in ("DOOR", "IGNITION", "GLOVE", "TRUNK", "HATCH")):
-        return ""
-    schema = {
-        "title": "HU66 lock-position guide",
-        "placement": "making_key",
-        "caption": "HU66 lock-position guide redrawn from verified operational data. Filled markers show which cut positions each lock uses.",
-        "key_orientation": "bow_left_tip_right",
-        "panels": [
-            {
-                "label": "Lock positions used while decoding",
-                "columns": ["1", "2", "3", "4", "5", "6", "7", "8"],
-                "rows": [
-                    ["Ignition", "filled", "filled", "filled", "filled", "filled", "filled", "filled", "filled"],
-                    ["Doors / trunk / hatch", "filled", "filled", "filled", "filled", "filled", "filled", "filled", "filled"],
-                    ["Glove box", "", "", "", "filled", "filled", "filled", "", ""],
-                ],
-                "note": "* Glove box position map applies only when equipped.",
-            }
-        ],
-    }
-    svg = render_original_diagram_svg(schema)
-    if not svg:
-        return ""
-    return f"""
-    <div class="asset-strip diagram-strip">
-      <figure class="asset-card inline-asset inline-diagram">
-        <div class="diagram-frame">{svg}</div>
-        <figcaption>{esc(schema["caption"])}</figcaption>
-      </figure>
-    </div>
-    """
+        data = asset.get("diagram_data") if isinstance(asset.get("diagram_data"), Mapping) else {}
+        data_text = jsonish_text(data).lower()
+        if any(token in f"{text} {data_text}" for token in ("orientation", "blade", "cut track", "guide track")):
+            return True
+    return False
 
 
 def jsonish_text(value: Any) -> str:
@@ -456,14 +441,14 @@ def render_vehicle_report(vehicle: Mapping[str, Any], system: Mapping[str, Any],
       {panel("Technician Checklist", checklist_html)}
       {panel("Verified Identifiers", source_facts_html)}
 
-      {panel("Emergency Blade / Mechanical Key", mechanical_html + render_asset_cards(assets, "mechanical_key") + render_standard_mechanical_diagram(system) + render_procedure_diagrams(system, "mechanical_key"))}
+      {panel("Emergency Blade / Mechanical Key", mechanical_html + render_asset_cards(assets, "mechanical_key", system) + ("" if has_mechanical_diagram_asset(assets) else render_standard_mechanical_diagram(system)) + render_procedure_diagrams(system, "mechanical_key"))}
 
       <div class="grid two">
         {panel("Transponder", render_kv_table(transponder_summary) + (f"<h4>Cloner Machine Information</h4>{cloner_html}" if cloner_html else ""))}
         {panel("Programming / Diagnostic", programming_html + render_asset_cards(assets, "programming") + render_procedure_diagrams(system, "programming"))}
       </div>
 
-      {panel("Making a Working Key", making_html + render_asset_cards(assets, "making_key") + render_standard_lock_position_diagram(system, assets) + render_procedure_diagrams(system, "making_key"), "procedure-panel")}
+      {panel("Making a Working Key", making_html + render_asset_cards(assets, "making_key", system) + render_procedure_diagrams(system, "making_key"), "procedure-panel")}
       {panel("Decoders / Readers", render_records_table([("tool", "Tool"), ("reference", "Reference")], system.get("decoders") or []))}
 
       {panel("Field Notes", render_list(making_key.get("field_notes") or []))}
