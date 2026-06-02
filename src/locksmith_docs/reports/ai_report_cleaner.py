@@ -1399,12 +1399,31 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
         re.IGNORECASE,
     ):
         making_key["code_availability"] = "No codes on any locks are listed; decode an accessible cylinder to produce a working key."
+    extracted_methods = extract_numbered_methods(source)
+    if isinstance(making_key, dict) and len(extracted_methods) > len(making_key.get("methods") or []):
+        making_key["methods"] = extracted_methods
+    decoder_rows = _extract_decoder_rows(source)
+    if decoder_rows:
+        merged["decoders"] = decoder_rows
     if isinstance(mechanical, dict) and re.search(
         r"INTERNAL.{0,24}(?:MILLING|MITUNG)",
         source,
         re.IGNORECASE | re.DOTALL,
     ):
-        mechanical.setdefault("milling", "Internal milling")
+        if "internal" not in str(mechanical.get("milling") or "").lower():
+            mechanical["milling"] = "Internal milling"
+    if isinstance(mechanical, dict) and re.search(r"Main\s*Track\s*cuts|Edge\s+Track\s+cuts", source, re.IGNORECASE):
+        setup = mechanical.get("cutting_setup") if isinstance(mechanical.get("cutting_setup"), dict) else {}
+        setup["cut_track"] = "Cut track - apply the listed cut depths here"
+        setup["guide_track"] = "Guide track - clearance only"
+        mechanical["cutting_setup"] = setup
+    if isinstance(mechanical, dict):
+        retainer = str(mechanical.get("ignition_retainer") or "").strip()
+        if retainer and (
+            len(retainer) > 32
+            or re.search(r"\b(?:dealer|proximity|system|programmer|remote)\b", retainer, re.IGNORECASE)
+        ):
+            mechanical.pop("ignition_retainer", None)
     return merged
 
 
@@ -1496,9 +1515,10 @@ def source_has_lock_position_visual(source: str) -> bool:
 
 def source_has_spacing_values(source: str) -> bool:
     normalized = re.sub(r"\s+", " ", source.upper())
-    if not re.search(r"\bSPAC(?:ING|NG|ES)\b", normalized):
+    match = re.search(r"\bSPAC(?:ING|NG|ES)\b", normalized)
+    if not match:
         return False
-    segment = re.split(r"\bDEPTHS?\b|\bTRANSPONDER\b|\bCHIP\b", normalized, maxsplit=1)[0]
+    segment = normalized[match.start():match.start() + 700]
     decimals = [float(f"0.{value}") for value in re.findall(r"(?<!\d)\.?\s*(\d{3})(?!\d)", segment)]
     plausible = [value for value in decimals if 0.15 <= value <= 1.20]
     return len(plausible) >= 6
@@ -1506,9 +1526,10 @@ def source_has_spacing_values(source: str) -> bool:
 
 def source_has_depth_values(source: str) -> bool:
     normalized = re.sub(r"\s+", " ", source.upper())
-    if "DEPTH" not in normalized:
+    match = re.search(r"\bDEPTHS?\b", normalized)
+    if not match:
         return False
-    segment = re.split(r"\bTRANSPONDER\b|\bCHIP\b|\bPROGRAM", normalized, maxsplit=1)[0]
+    segment = normalized[match.start():match.start() + 500]
     decimals = [float(f"0.{value}") for value in re.findall(r"(?<!\d)\.?\s*(\d{3})(?!\d)", segment)]
     plausible = [value for value in decimals if 0.10 <= value <= 0.60]
     return len(plausible) >= 3
@@ -1517,6 +1538,97 @@ def source_has_depth_values(source: str) -> bool:
 def source_has_pin_access_limitation(source: str) -> bool:
     normalized = re.sub(r"\s+", " ", source.upper())
     return bool(re.search(r"DEALER.{0,80}(?:NO|NOT|DOES\s+NOT|DOESN'?T).{0,80}ACCESS.{0,40}PIN", normalized))
+
+
+def source_has_factory_tool_value(source: str) -> bool:
+    normalized = re.sub(r"\s+", " ", source.upper())
+    if re.search(r"\b(?:MICROPOD|WI\s*TECH|TECHSTREAM|IDS|SDD|ODIS)\b", normalized):
+        return True
+    return False
+
+
+def source_has_ignition_retainer_value(source: str) -> bool:
+    normalized = re.sub(r"\s+", " ", source.upper())
+    match = re.search(r"\bIGN(?:ITION)?\s+RETAINER\b(.{0,90})", normalized)
+    if not match:
+        return False
+    segment = match.group(1)
+    if re.search(r"\b(?:YES|NO|N/A|NA|ON|OFF)\b", segment):
+        return True
+    if re.search(r"\b(?:RETAINER|IGNITION)\s*[:#]\s*[A-Z0-9][A-Z0-9 /-]{1,24}", segment):
+        return True
+    return False
+
+
+def extract_numbered_methods(source: str) -> list[str]:
+    normalized = re.sub(r"\s+", " ", source)
+    methods: list[str] = []
+    if re.search(
+        r"Method\s*#?\s*1.{0,40}lock\s+Reader/Decoder.{0,80}door\s+lock.{0,80}complete\s+key",
+        normalized,
+        re.IGNORECASE,
+    ):
+        methods.append("Method 1: Use a lock reader/decoder in the door lock to determine the cuts for a complete key.")
+    if re.search(
+        r"Method\s*#?\s*2.{0,40}Disassemble\s+the\s+door\s+cylinder.{0,80}decode\s+the\s+tumblers",
+        normalized,
+        re.IGNORECASE,
+    ):
+        methods.append("Method 2: Disassemble the door cylinder and decode the tumblers.")
+    for match in re.finditer(r"\bMethod\s*#?\s*(\d+)\s*(.+?)(?=\bMethod\s*#?\s*\d+\b|$)", normalized, re.IGNORECASE):
+        if any(method.startswith(f"Method {match.group(1)}:") for method in methods):
+            continue
+        body = match.group(2).strip(" -=|")
+        body = re.split(
+            r"\b(?:Main\s*Track|This\s+is\s+an\s+example|REMOTE\s*:|TRANSPONDER|PROGRAMMER|DECODERS?\s*:|CHIP\s+INFORMATION|FACTORY\s+TOOL)\b",
+            body,
+            maxsplit=1,
+            flags=re.IGNORECASE,
+        )[0]
+        body = re.split(r"Main\s*Track|This\s+is\s+an\s+example", body, maxsplit=1, flags=re.IGNORECASE)[0]
+        body = " ".join(body.split()).strip(" .-=|")
+        body = re.sub(r"\block\s+Reader/Decoder\b", "lock reader/decoder", body, flags=re.IGNORECASE)
+        body = re.sub(r"\bdoorlock\b", "door lock", body, flags=re.IGNORECASE)
+        body = re.sub(r"\bto[- ]determine\b", "to determine", body, flags=re.IGNORECASE)
+        body = re.sub(r"^[^A-Za-z0-9]+", "", body)
+        body = re.sub(r"\s+", " ", body).strip()
+        if len(body) < 20 or not is_clean_public_text(body):
+            continue
+        if re.search(r"\b(?:decode|reader|decoder|disassemble|cylinder|tumblers|wafers|door lock)\b", body, re.IGNORECASE):
+            methods.append(f"Method {match.group(1)}: {body}.")
+    return list(dict.fromkeys(methods))[:5]
+
+
+def source_remote_option_count(source_text: str) -> int:
+    source = re.sub(r"\s+", " ", source_text.upper())
+    snippets: set[str] = set()
+    for match in re.finditer(r"\b(?:FOB\s+)?REMOTE\s*:", source):
+        next_match = re.search(
+            r"\b(?:FOB\s+)?REMOTE\s*:|\bLOCK\s+PARTS\b|\bCHIP\s+INFORMATION\b|\bPROGRAMMER\b|\bMETHOD\s*#?\s*\d+\b",
+            source[match.end():],
+        )
+        end = match.end() + next_match.start() if next_match else match.start() + 260
+        snippet = source[match.start(): min(end, match.start() + 260)]
+        if not re.search(r"\b(?:FCC|MHz|MHZ|[A-Z0-9]{6,}[A-Z0-9])\b", snippet):
+            continue
+        remote_part = _first_match(snippet, r"REMOTE\s*:\s*([A-Z0-9 -]{6,24})")
+        emergency_key = _first_match(snippet, r"EMERG\s+KEY\s*:\s*([A-Z0-9 -]{6,24})")
+        fcc = _first_match(snippet, r"FCC\s+INFO\s*:\s*([A-Z0-9-]{4,24})")
+        frequency = _first_match(snippet, r"\b(315|433|434)\s*MHZ\b")
+        combo = " ".join(value for value in (remote_part, emergency_key, frequency) if value)
+        normalized = re.sub(r"[^A-Z0-9]+", " ", combo or snippet)
+        normalized = re.sub(r"\b(?:REMOTE|EMERG|KEY|FCC|INFO|MHZ|BUTTONS?)\b", " ", normalized)
+        normalized = re.sub(r"\b([0-9])O\b", r"\g<1>0", normalized)
+        normalized = re.sub(r"\b([0-9A-Z]+)NO\b", r"\g<1>N0", normalized)
+        normalized = re.sub(r"\bK\s+4", "4", normalized)
+        normalized = re.sub(r"\bKE\s+4", "4", normalized)
+        normalized = re.sub(r"\b[O0]A\b|\bOA\b", " ", normalized)
+        normalized = re.sub(r"\s+", " ", normalized).strip()
+        if len(normalized) >= 10:
+            snippets.add(normalized[:100])
+    if snippets:
+        return len(snippets)
+    return len(re.findall(r"\b(?:FOB\s+)?REMOTE\s*:", source))
 
 
 def _sync_mechanical_tables_from_diagrams(draft: dict[str, Any], diagrams: list[dict[str, Any]]) -> None:
@@ -1564,7 +1676,7 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
         options_text = json.dumps(known_options, ensure_ascii=False).upper()
         if "FCC" not in options_text:
             issues.append("Source includes FCC information, but it is not associated with compatible remote options.")
-        source_remote_count = len(re.findall(r"\b(?:FOB\s+)?REMOTE\s*:", source))
+        source_remote_count = source_remote_option_count(source_text)
         if source_remote_count >= 2 and len(known_options) < source_remote_count:
             issues.append(
                 f"Source lists {source_remote_count} remote options, but the structured table contains only {len(known_options)}."
@@ -1586,7 +1698,7 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
             if reference and (tool not in decoder_text or reference not in decoder_text):
                 issues.append(f"Source decoder {tool} {reference} is missing or mismatched in the structured decoder table.")
                 break
-    if re.search(r"\bFactory\s+Tool\b", source, re.IGNORECASE) and not programming.get("factory_tool"):
+    if source_has_factory_tool_value(source_text) and not programming.get("factory_tool"):
         issues.append("Source includes a factory diagnostic tool, but programming.factory_tool is missing.")
     if re.search(r"\b(?:ILCO|KEYWAY)\s*[:#]", source) and not mechanical.get("ilco_keyway"):
         issues.append("Source includes blade/keyway identification but the structured report does not.")
@@ -1616,7 +1728,7 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
         issues.append("Source identifies internal milling, but the mechanical key data does not.")
     if "AIRBAGS" in source and not mechanical.get("air_bags"):
         issues.append("Source includes airbag service data, but the mechanical key data does not.")
-    if "RETAINER" in source and not mechanical.get("ignition_retainer"):
+    if source_has_ignition_retainer_value(source_text) and not mechanical.get("ignition_retainer"):
         issues.append("Source includes ignition-retainer data, but the mechanical key data does not.")
     if str(mechanical.get("ignition_retainer") or "").strip().lower() in {"on", "or", "in", "yes"}:
         issues.append("Ignition-retainer value appears corrupted and must be reread from the source.")
@@ -1641,7 +1753,7 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
         issues.append("Source identifies a test key, but the structured test-key field is missing.")
     if re.search(r"\b(?:PROGRAMMER|DIAGNOSTIC|SMART PRO|TCODE|MVP)\b", source) and not draft.get("programming"):
         issues.append("Source includes programming/tool guidance but the structured report does not.")
-    if re.search(r"\bFACTORY\s+TOO[LI!]\b", source) and not (draft.get("programming") or {}).get("factory_tool"):
+    if source_has_factory_tool_value(source_text) and not (draft.get("programming") or {}).get("factory_tool"):
         issues.append("Source identifies a factory programming tool, but the structured report does not.")
     if "PROGRAMMER & DIAGNOSTIC TOOLS" in source and "SUBSCRIPTION" in source and not (draft.get("programming") or {}).get("factory_tool"):
         issues.append("Source visually identifies a factory-tool/subscription path, but the structured report does not.")

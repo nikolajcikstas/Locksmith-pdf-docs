@@ -314,7 +314,7 @@ def render_standard_mechanical_diagram(system: Mapping[str, Any]) -> str:
         or ("left track" in setup_text and "right track" in setup_text)
         or "guide track" in setup_text
     )
-    if "internal" not in milling.lower() or not has_track_facts:
+    if not has_track_facts:
         return ""
     profile = str(
         mechanical.get("test_key")
@@ -322,13 +322,24 @@ def render_standard_mechanical_diagram(system: Mapping[str, Any]) -> str:
         or (system.get("transponder") or {}).get("test_key")
         or "Mechanical key"
     ).strip()
+    if profile.upper() in {"", "N/A", "NA", "NONE", "-"}:
+        decoders = system.get("decoders") if isinstance(system.get("decoders"), Sequence) else []
+        for decoder in decoders:
+            if not isinstance(decoder, Mapping):
+                continue
+            reference = str(decoder.get("reference") or "").strip()
+            if re.fullmatch(r"HU\d{2,3}[A-Z]?", reference.upper()):
+                profile = reference.upper()
+                break
+    if profile.upper() in {"", "N/A", "NA", "NONE", "-"}:
+        profile = "Mechanical key"
     schema = {
         "title": f"{profile} mechanical blade orientation",
         "placement": "mechanical_key",
         "caption": f"{profile} orientation reference showing the source-listed cut track and guide track.",
         "visual_type": "blade_orientation",
         "blade_profile": profile,
-        "milling": milling,
+        "milling": milling if milling and milling.upper() not in {"N/A", "NA", "NONE", "-"} else "Track reference",
         "cut_track": str(setup.get("cut_track") or "Cut track - apply cut depths here"),
         "guide_track": str(setup.get("guide_track") or "Guide track - clearance only"),
         "note": "Orientation reference only. Use the spacing and depth tables for cutting values.",

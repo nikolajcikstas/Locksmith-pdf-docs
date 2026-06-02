@@ -15,6 +15,7 @@ from locksmith_docs.parsing.section_vehicle_parser import extract_vehicle_applic
 from locksmith_docs.reports.verified_facts import apply_verified_facts
 from locksmith_docs.reports.ai_report_cleaner import (
     clean_report_draft_with_ai,
+    merge_source_supported_facts,
     report_cleanup_enabled,
     report_completeness_issues,
     report_quality_issues,
@@ -245,6 +246,7 @@ def build_drafts(
                 new_requests += 1
                 processed_by_ai = True
         draft = apply_verified_facts(draft, str(draft.get("code") or ""), DEFAULT_VERIFIED_FACTS)
+        draft = merge_source_supported_facts(draft, source_text)
         draft["title"] = report_title(str(draft.get("code") or ""), draft.get("vehicle_applications") or [])
         publication_issues = report_quality_issues(draft) + report_completeness_issues(draft, source_text)
         if rejected_cached:
