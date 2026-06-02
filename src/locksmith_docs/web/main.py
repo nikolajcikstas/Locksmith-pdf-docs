@@ -20,7 +20,7 @@ from locksmith_docs.db.init_schema import init_schema
 from locksmith_docs.db.report_seed import ensure_bundled_parser_seed, ensure_bundled_report_seed, export_published_report_seed
 from locksmith_docs.db.repository import LocksmithRepository, VehicleQuery
 from locksmith_docs.processing.document_pipeline import refresh_verified_output, run_asset_import_job, run_asset_regeneration_job, run_full_catalog_index_job, run_owner_library_pipeline_job, run_pilot_import_job, run_publish_next_batch_job, run_rebuild_job, run_refresh_verified_output_job, run_reprocess_job, run_retry_rejected_reports_job, run_upload_job, save_uploaded_pdf, uploaded_pdf_paths
-from locksmith_docs.processing.job_status import latest_jobs, start_job
+from locksmith_docs.processing.job_status import has_running_job, interrupt_running_jobs, latest_jobs, start_job
 from locksmith_docs.reports.ai_report_cleaner import report_api_key_fingerprint, report_cleanup_enabled, require_report_ai_access, targeted_ocr_debug
 from locksmith_docs.reports.build_drafts import load_page_image_lookup
 from locksmith_docs.reports.render import render_vehicle_report, vehicle_display_title
@@ -47,6 +47,7 @@ app.add_middleware(
 @app.on_event("startup")
 def ensure_database_schema() -> None:
     init_schema()
+    interrupt_running_jobs("The app restarted before this job completed. Start a new rebuild to continue.")
     ensure_bundled_parser_seed()
     ensure_bundled_report_seed()
     if (settings.data_dir / "report_drafts.json").exists():
@@ -722,6 +723,8 @@ def admin_upload(request: Request, background_tasks: BackgroundTasks, files: lis
 
 @app.post("/admin/rebuild")
 def admin_rebuild(background_tasks: BackgroundTasks, system_code: str = Form(...)):
+    if has_running_job("rebuild", "publish", "pipeline", "retry"):
+        return RedirectResponse(url="/admin?message=A report verification job is already running. Wait for it to finish before starting another.", status_code=303)
     clean_system_code = clean_param(system_code)
     job_id = start_job("rebuild", f"Publish report: {clean_system_code}")
     background_tasks.add_task(run_rebuild_job, job_id, clean_system_code)
@@ -749,6 +752,8 @@ def admin_debug_technical(system_code: str = Query(...)):
 
 @app.post("/admin/publish-next-batch")
 def admin_publish_next_batch(background_tasks: BackgroundTasks):
+    if has_running_job("rebuild", "publish", "pipeline", "retry"):
+        return RedirectResponse(url="/admin?message=A report verification job is already running. Wait for it to finish before starting another.", status_code=303)
     job_id = start_job("publish", "Publish next queued report batch")
     background_tasks.add_task(run_publish_next_batch_job, job_id)
     return RedirectResponse(url=f"/admin?message=Queued report batch started: {job_id}.", status_code=303)
@@ -756,6 +761,8 @@ def admin_publish_next_batch(background_tasks: BackgroundTasks):
 
 @app.post("/admin/process-library")
 def admin_process_library(background_tasks: BackgroundTasks):
+    if has_running_job("rebuild", "publish", "pipeline", "retry"):
+        return RedirectResponse(url="/admin?message=A report verification job is already running. Wait for it to finish before starting another.", status_code=303)
     job_id = start_job("pipeline", "Process uploaded library")
     background_tasks.add_task(run_owner_library_pipeline_job, job_id)
     return RedirectResponse(url=f"/admin?message=Library processing started: {job_id}.", status_code=303)
@@ -795,6 +802,8 @@ def admin_refresh_verified(background_tasks: BackgroundTasks):
 
 @app.post("/admin/retry-rejected")
 def admin_retry_rejected(background_tasks: BackgroundTasks):
+    if has_running_job("rebuild", "publish", "pipeline", "retry"):
+        return RedirectResponse(url="/admin?message=A report verification job is already running. Wait for it to finish before starting another.", status_code=303)
     job_id = start_job("retry", "Retry rejected reports")
     background_tasks.add_task(run_retry_rejected_reports_job, job_id)
     return RedirectResponse(url=f"/admin?message=Rejected report retry started: {job_id}.", status_code=303)

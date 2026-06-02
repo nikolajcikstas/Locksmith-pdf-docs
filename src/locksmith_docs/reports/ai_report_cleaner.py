@@ -146,6 +146,18 @@ def clean_report_draft_with_ai(
     model = model or os.environ.get("OPENAI_REPORT_MODEL", os.environ.get("OPENAI_OCR_MODEL", "gpt-4o-mini"))
     draft = enrich_draft_with_targeted_ocr(draft, source_images or [])
     draft = merge_source_supported_facts(draft, source_text)
+    ai_source_images = (source_images or []) if report_image_payload_enabled() else []
+    image_instruction = (
+        "The attached labeled images are enlarged working-detail crops from the source pages. "
+        "IMAGE: when a lock-position map is present, procedure_diagrams is mandatory. Add one item with "
+        "placement='making_key', a panels array containing one panel labelled 'Lock positions', columns "
+        "['1','2','3','4','5','6','7','8'], and rows in the form ['Ignition','filled',...], "
+        "['Doors / trunk / hatch','filled',...], ['Glove box',...]; use 'filled' only where the source "
+        "diagram has a marked square and '' elsewhere. This is rendered as an original SVG; do not include "
+        "the source photograph."
+        if ai_source_images
+        else "Do not invent procedure_diagrams from ordinary text. Include a diagram only when the OCR text clearly describes a readable lock-position map."
+    )
     cleaned = request_cleaned_report(
         api_key,
         model,
@@ -153,9 +165,9 @@ def clean_report_draft_with_ai(
         {
             "draft_json": draft,
             "source_text_excerpt": source_text[:60000],
-            "instruction": "Return a full technician report, not a synopsis. Recheck each visible table cell on the attached pages before returning JSON: applications, key type/style, code series, keyway, MACS, safety/retainer fields, remote rows, spacing/depth table, cutting-track note, chip/transponder/reusable/test-key fields, PIN and factory tool, every programmer/cloner status, code availability, decoders and each numbered method. The attached labeled images are enlarged working-detail crops from the source pages. Transcribe every visible chip identifier and every spacing/depth value. IMAGE: when a lock-position map is present, procedure_diagrams is mandatory. Add one item with placement='making_key', a panels array containing one panel labelled 'Lock positions', columns ['1','2','3','4','5','6','7','8'], and rows in the form ['Ignition','filled',...], ['Doors / trunk / hatch','filled',...], ['Glove box',...]; use 'filled' only where the source diagram has a marked square and '' elsewhere. This is rendered as an original SVG; do not include the source photograph. Fill missing structured sections only from supported source facts and retain detailed procedural guidance.",
+            "instruction": "Return a full technician report, not a synopsis. Recheck each visible OCR table cell before returning JSON: applications, key type/style, code series, keyway, MACS, safety/retainer fields, remote rows, spacing/depth table, cutting-track note, chip/transponder/reusable/test-key fields, PIN and factory tool, every programmer/cloner status, code availability, decoders and each numbered method. Transcribe every visible chip identifier and every spacing/depth value. Fill missing structured sections only from supported source facts and retain detailed procedural guidance. " + image_instruction,
         },
-        source_images or [],
+        ai_source_images,
     )
     if not cleaned or cleaned.get("code") != draft.get("code"):
         return draft, False
@@ -184,7 +196,7 @@ def clean_report_draft_with_ai(
                     "detected_quality_problems": issues[:16],
                     "instruction": "Return a compact patch only. Fill the missing fields called out in detected_quality_problems by reading the enlarged source-page images. Never copy source image pixels. The pin-position map crop is intentionally close: inspect every one of its eight columns. A map must list each of its eight marker cells explicitly for each visible row.",
                 },
-                source_images or [],
+                ai_source_images,
                 technical_only=True,
             )
         except RuntimeError:
@@ -355,6 +367,10 @@ def source_image_limit() -> int:
         return max(1, min(12, int(os.environ.get("AI_REPORT_SOURCE_IMAGE_LIMIT", "12"))))
     except ValueError:
         return 12
+
+
+def report_image_payload_enabled() -> bool:
+    return os.environ.get("REPORT_AI_SEND_IMAGES", "0").strip().lower() in {"1", "true", "yes", "on"}
 
 
 def enrich_draft_with_targeted_ocr(draft: dict[str, Any], source_images: list[Path]) -> dict[str, Any]:
@@ -835,9 +851,12 @@ def _extract_decoder_rows(text: str) -> list[dict[str, str]]:
 
 
 def _clean_decoder_reference(value: str) -> str:
-    cleaned = " ".join(value.split()).strip(" .,:;|_->").upper()
+    cleaned = " ".join(value.split()).strip(" .,:;|_->‘’'\"").upper()
     cleaned = re.sub(r"\b(CHR|CHRY)(\d)\b", r"\1 \2", cleaned)
+    cleaned = re.sub(r"\bHUI(\d{2})\b", r"HU1\1", cleaned)
+    cleaned = re.sub(r"\bBIIL\b", "B111", cleaned)
     cleaned = re.sub(r"\b((?:KDC|Y|CY|HU|TOY|VWI|CHR|CHRY)[A-Z0-9 ]*?\d[A-Z0-9]*)(?:\s+A)+$", r"\1", cleaned)
+    cleaned = re.sub(r"\s*[-–—]+$", "", cleaned).strip()
     cleaned = re.sub(r"\s+", " ", cleaned)
     return cleaned
 
@@ -846,9 +865,13 @@ def _is_clean_decoder_reference(value: str) -> bool:
     cleaned = str(value or "").strip().upper()
     if not cleaned or len(cleaned) > 20:
         return False
-    if cleaned in {"N/A", "NA", "NONE", "NO", "-", "--", "NIL", "NULL"}:
+    if cleaned in {"N/A", "NA", "NONE", "NO", "-", "--", "NIL", "NULL", "NLA"}:
         return False
-    if re.search(r"[|:>]", cleaned):
+    if re.search(r"[|:>‘’'\",]", cleaned):
+        return False
+    if not re.search(r"\d", cleaned):
+        return False
+    if not re.fullmatch(r"[A-Z0-9 /-]+", cleaned):
         return False
     return not re.search(
         r"\b(?:DETERMINATOR|LISHI|ACCU\s*READER|ACCUREADER|EEZ\s*READER|EEZREADER|COBRA|PROGRAMMER|FACTORY)\b",
@@ -871,6 +894,8 @@ def _extract_programming_patch(text: str) -> dict[str, Any]:
         patch["pin_required"] = "Yes"
     if re.search(r"\b4\s*[- ]?\s*digit\b", source, re.IGNORECASE):
         patch["pin_guidance"] = "4-digit PIN required."
+    if re.search(r"dealer.{0,80}(?:no|not|does\s+not|doesn'?t).{0,80}access.{0,40}pin", source, re.IGNORECASE):
+        patch["pin_guidance"] = "Dealer systems do not provide PIN access; use supported aftermarket programming or EEPROM workflow."
     return patch
 
 
@@ -1046,6 +1071,8 @@ def sanitize_structured_sections(draft: dict[str, Any]) -> dict[str, Any]:
     for name in ("decoders", "lock_parts", "troubleshooting"):
         if isinstance(cleaned.get(name), list):
             cleaned[name] = [item for item in cleaned[name] if isinstance(item, dict)]
+    if isinstance(cleaned.get("decoders"), list):
+        cleaned["decoders"] = sanitize_decoder_rows(cleaned["decoders"])
     for name in ("quick_answer", "warnings", "source_coverage"):
         if isinstance(cleaned.get(name), list):
             cleaned[name] = [item for item in cleaned[name] if isinstance(item, str)]
@@ -1054,16 +1081,30 @@ def sanitize_structured_sections(draft: dict[str, Any]) -> dict[str, Any]:
         if "known_options" in key_remote and not isinstance(key_remote["known_options"], list):
             key_remote.pop("known_options", None)
         elif isinstance(key_remote.get("known_options"), list):
-            key_remote["known_options"] = [item for item in key_remote["known_options"] if isinstance(item, dict)]
+            key_remote["known_options"] = sanitize_remote_options(key_remote["known_options"])
     mechanical = cleaned.get("mechanical_key")
     if isinstance(mechanical, dict):
         for name in ("spacing", "depths", "cutting_setup"):
             if name in mechanical and not isinstance(mechanical[name], dict):
                 mechanical.pop(name, None)
+        if "spacing" in mechanical and not _is_descending_cut_table(mechanical["spacing"], 8):
+            mechanical.pop("spacing", None)
+        if "depths" in mechanical and not _is_descending_cut_table(mechanical["depths"], 4):
+            mechanical.pop("depths", None)
+        for name in ("start_cut", "cut_to_cut"):
+            if name in mechanical and not re.fullmatch(r"\.?\d{3}", str(mechanical.get(name) or "").strip()):
+                mechanical.pop(name, None)
+        if "macs" in mechanical and not re.fullmatch(r"\d{1,2}", str(mechanical.get("macs") or "").strip()):
+            mechanical.pop("macs", None)
+        if "ignition_retainer" in mechanical and not is_clean_public_text(str(mechanical.get("ignition_retainer") or "")):
+            mechanical.pop("ignition_retainer", None)
         if "cut_position_map" in mechanical and not isinstance(mechanical["cut_position_map"], list):
             mechanical.pop("cut_position_map", None)
     programming = cleaned.get("programming")
     if isinstance(programming, dict):
+        for name in ("factory_tool", "pin_guidance", "tool_guidance"):
+            if name in programming and not is_clean_public_text(str(programming.get(name) or "")):
+                programming.pop(name, None)
         if "tools" in programming and not isinstance(programming["tools"], list):
             programming.pop("tools", None)
         elif isinstance(programming.get("tools"), list):
@@ -1139,6 +1180,61 @@ def sanitize_structured_sections(draft: dict[str, Any]) -> dict[str, Any]:
         else:
             cleaned.pop("lock_parts", None)
     return cleaned
+
+
+def sanitize_decoder_rows(items: list[Any]) -> list[dict[str, str]]:
+    cleaned: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        tool = str(item.get("tool") or "").strip()
+        reference = _clean_decoder_reference(str(item.get("reference") or ""))
+        if not tool or not _is_clean_decoder_reference(reference):
+            continue
+        key = (tool.upper(), reference.upper())
+        if key in seen:
+            continue
+        seen.add(key)
+        cleaned.append({"tool": tool, "reference": reference})
+    return cleaned
+
+
+def sanitize_remote_options(items: list[Any]) -> list[dict[str, Any]]:
+    cleaned: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str, str]] = set()
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        row = deepcopy(item)
+        for field in ("part", "fcc_id", "frequency", "emergency_blade", "buttons", "notes", "models", "years"):
+            if field in row and not is_clean_public_text(str(row.get(field) or "")):
+                row.pop(field, None)
+        if "notes" in row and re.search(r"\b(?:REMOTE|EMERG(?:ENCY)?\s+KEY|FCC\s+INFO)\b", str(row["notes"]), re.IGNORECASE):
+            row.pop("notes", None)
+        if not any(str(row.get(field) or "").strip() for field in ("part", "fcc_id", "frequency", "emergency_blade", "buttons", "notes")):
+            continue
+        key = tuple(str(row.get(field) or "").strip().upper() for field in ("part", "fcc_id", "frequency", "emergency_blade"))
+        if key in seen:
+            continue
+        seen.add(key)
+        cleaned.append(row)
+    return cleaned
+
+
+def is_clean_public_text(value: str) -> bool:
+    text = " ".join(str(value or "").split())
+    if not text:
+        return False
+    if report_quality_issues(text):
+        return False
+    if len(text) > 140 and re.search(r"[|_=>]{2,}", text):
+        return False
+    if len(re.findall(r"[|_=>]", text)) >= 4:
+        return False
+    if re.fullmatch(r"[\W_]+", text):
+        return False
+    return True
 
 
 def sanitize_vehicle_applications(items: list[Any]) -> list[dict[str, Any]]:
@@ -1398,6 +1494,31 @@ def source_has_lock_position_visual(source: str) -> bool:
     return has_visual_lock_labels and (has_position_header or marked_grid_hint or compact_rows)
 
 
+def source_has_spacing_values(source: str) -> bool:
+    normalized = re.sub(r"\s+", " ", source.upper())
+    if not re.search(r"\bSPAC(?:ING|NG|ES)\b", normalized):
+        return False
+    segment = re.split(r"\bDEPTHS?\b|\bTRANSPONDER\b|\bCHIP\b", normalized, maxsplit=1)[0]
+    decimals = [float(f"0.{value}") for value in re.findall(r"(?<!\d)\.?\s*(\d{3})(?!\d)", segment)]
+    plausible = [value for value in decimals if 0.15 <= value <= 1.20]
+    return len(plausible) >= 6
+
+
+def source_has_depth_values(source: str) -> bool:
+    normalized = re.sub(r"\s+", " ", source.upper())
+    if "DEPTH" not in normalized:
+        return False
+    segment = re.split(r"\bTRANSPONDER\b|\bCHIP\b|\bPROGRAM", normalized, maxsplit=1)[0]
+    decimals = [float(f"0.{value}") for value in re.findall(r"(?<!\d)\.?\s*(\d{3})(?!\d)", segment)]
+    plausible = [value for value in decimals if 0.10 <= value <= 0.60]
+    return len(plausible) >= 3
+
+
+def source_has_pin_access_limitation(source: str) -> bool:
+    normalized = re.sub(r"\s+", " ", source.upper())
+    return bool(re.search(r"DEALER.{0,80}(?:NO|NOT|DOES\s+NOT|DOESN'?T).{0,80}ACCESS.{0,40}PIN", normalized))
+
+
 def _sync_mechanical_tables_from_diagrams(draft: dict[str, Any], diagrams: list[dict[str, Any]]) -> None:
     mechanical = draft.get("mechanical_key")
     if not isinstance(mechanical, dict):
@@ -1471,9 +1592,9 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
         issues.append("Source includes blade/keyway identification but the structured report does not.")
     if re.search(r"\b(?:TDB1000|TCODE|MVP|AUTEL|SMART\s*PRO|AUTO\s*PRO\s*PAD)\b", str(mechanical.get("ilco_keyway") or ""), re.IGNORECASE):
         issues.append("A programmer/tool reference was incorrectly placed in the blade/keyway field.")
-    if re.search(r"\bSPAC(?:ING|NG)\b", source) and not mechanical.get("spacing"):
+    if source_has_spacing_values(source_text) and not mechanical.get("spacing"):
         issues.append("Source includes spacing data but the structured report does not.")
-    if "DEPTH" in source and not mechanical.get("depths"):
+    if source_has_depth_values(source_text) and not mechanical.get("depths"):
         issues.append("Source includes depth data but the structured report does not.")
     if re.search(r"\bEIGHT\s+SPACES\b", source) and len(mechanical.get("spacing") or {}) < 8:
         issues.append("Source specifies eight spacing positions, but the structured spacing table is incomplete.")
@@ -1541,7 +1662,7 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
         issues.append("Source mentions the KESSY proximity option, but the report does not.")
     if "PROXIMITY OPTION" in source and str(draft.get("system_type") or "").strip().upper().startswith("PROXIMITY"):
         issues.append("Source presents proximity as an option, but the report labels the base system as proximity-only.")
-    if "DEALER DOES NOT HAVE ACCESS TO PIN" in source and not (draft.get("programming") or {}).get("pin_guidance"):
+    if source_has_pin_access_limitation(source_text) and not (draft.get("programming") or {}).get("pin_guidance"):
         issues.append("Source includes PIN-access limitations, but the programming guidance does not preserve them.")
     if re.search(r"\bNOCODESONANYLOCKS\b", source) and "NO CODES ON ANY LOCKS" not in rendered:
         issues.append("Source states that no codes are available on any locks, but the report does not.")

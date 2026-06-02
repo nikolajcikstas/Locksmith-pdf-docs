@@ -88,6 +88,19 @@ def latest_jobs(limit: int = 6) -> list[dict[str, Any]]:
     return list(reversed(jobs))[:limit]
 
 
+def interrupt_running_jobs(message: str = "Processing stopped before completion. Start a new rebuild to continue.") -> None:
+    jobs = load_jobs()
+    changed = False
+    for job in jobs:
+        if job.get("status") == "running":
+            job["status"] = "interrupted"
+            job["message"] = message
+            job["updated_at"] = now_iso()
+            changed = True
+    if changed:
+        save_jobs(jobs)
+
+
 def has_running_job(*kinds: str) -> bool:
     wanted = {kind for kind in kinds if kind}
     for job in load_jobs():
