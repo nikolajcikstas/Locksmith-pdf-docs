@@ -970,6 +970,184 @@ def _extract_key_reference_options(text: str) -> list[dict[str, str]]:
     }]
 
 
+def _extract_mechanical_spec_row(text: str) -> dict[str, str]:
+    source = " ".join(text.split())
+    for src, dst in {
+        "Starteut": "StartCut",
+        "StanCut": "StartCut",
+        "Cuttocut": "CutToCut",
+        "AicBags": "AirBags",
+        "AirBags": "AirBags",
+        "ignRetainer": "IgnRetainer",
+    }.items():
+        source = source.replace(src, dst)
+    rows = [
+        source,
+        source.replace("|", " "),
+    ]
+    for row in rows:
+        match = re.search(
+            r"(?P<code>[A-Z]{0,3}\s*\d[\d,\s]*[-\u2013]\s*[A-Z0-9,\s]+)\s+"
+            r"(?P<style>(?:D[bo]Sided|Double\s*Sided|Single\s*Sided|High\s*Sec(?:urity)?|Edge\s*Cut|Sidewinder))\s+"
+            r"(?P<card>[A-Z]{1,4}\d{2,5})\s+"
+            r"(?P<itl>\d{1,4})\s+"
+            r"(?P<macs>[1-9]|1[0-2])\s+"
+            r"(?P<start>\d{3})\s+"
+            r"(?P<cut>\d{3})\s+"
+            r"(?P<air>Yes|No|N/?A)\s+"
+            r"(?P<retainer>None|Spring|Clip|Pin|Ring|N/?A)\b",
+            row,
+            re.IGNORECASE,
+        )
+        if not match:
+            continue
+        style = "Double-sided" if re.search(r"D[bo]Sided|Double", match.group("style"), re.IGNORECASE) else " ".join(match.group("style").split())
+        code_series = re.sub(r"\s+", " ", match.group("code").upper()).replace(" - ", "-").strip()
+        numeric_code = re.search(r"(\d[\d,\s]*[-\u2013]\s*[A-Z0-9,\s]+)$", code_series)
+        if numeric_code:
+            code_series = numeric_code.group(1).strip()
+        return {
+            "code_series": code_series,
+            "style": style,
+            "card": match.group("card").upper(),
+            "itl": match.group("itl"),
+            "macs": match.group("macs"),
+            "start_cut": "." + match.group("start"),
+            "cut_to_cut": "." + match.group("cut"),
+            "air_bags": match.group("air").title().replace("N/A", "n/a"),
+            "ignition_retainer": match.group("retainer").title().replace("N/A", "n/a"),
+        }
+    return {}
+
+
+def _extract_remote_options_from_source(text: str) -> list[dict[str, str]]:
+    source = " ".join(text.split())
+    source = re.sub(r"\bF\s*C\s*C\b", "FCC", source, flags=re.IGNORECASE)
+    source = re.sub(r"\bM\s*H\s*z\b", "MHz", source, flags=re.IGNORECASE)
+    rows: list[dict[str, str]] = []
+    for match in re.finditer(r"\b(?:Prox|Remote|Fob\s+Remote|Remote\s+Key)\s*:\s*(.+?)(?=\s+>\s*(?:Prox|Remote|Fob\s+Remote|Remote\s+Key)\s*:|\s+\b(?:CHIP|LOCK\s+PARTS|METHOD|DECODERS?)\b|$)", source, re.IGNORECASE):
+        snippet = match.group(1)[:260]
+        if not re.search(r"\bFCC\s+Info\b|\b(?:315|314|433|434)\s*MHz\b", snippet, re.IGNORECASE):
+            continue
+        row: dict[str, str] = {}
+        year = _first_match(snippet, r"\((\d{4}(?:[-\u2013]\d{2,4})?)\)")
+        part = _first_match(snippet, r"^\s*(?:\(\d{4}(?:[-\u2013]\d{2,4})?\)\s*)?([A-Z0-9][A-Z0-9 -]{5,24})(?=\s+\(|\s+-|\s+or|\s+FCC|\s*$)")
+        ilco = _first_match(snippet, r"\bILCO#?\s*([A-Z0-9-]{5,24})")
+        fcc = _first_match(snippet, r"\bFCC\s+Info\s*:\s*([A-Z0-9? -]{4,24})")
+        freq = _first_match(snippet, r"\b(314|315|433|434)\s*MHz\b")
+        buttons = _first_match(snippet, r"\((\d)\s*Btn\)")
+        emergency = _first_match(snippet, r"\bE[- ]?Key\s+([A-Z0-9-]{5,24})")
+        if year:
+            row["years"] = year.replace("\u2013", "-")
+        if part:
+            row["part"] = " ".join(part.replace("-", " ").split())
+        if ilco and not row.get("part"):
+            row["part"] = ilco.upper()
+        elif ilco:
+            row["notes"] = f"ILCO reference {ilco.upper()}"
+        if fcc:
+            row["fcc_id"] = re.sub(r"\s+", "", fcc.upper())
+        if freq:
+            row["frequency"] = f"{freq} MHz"
+        if buttons:
+            row["buttons"] = buttons
+        if emergency:
+            row["emergency_blade"] = emergency.upper()
+        if any(row.get(field) for field in ("part", "fcc_id", "frequency", "emergency_blade")):
+            rows.append(row)
+    return sanitize_remote_options(rows)
+
+
+def _expand_year_range(value: str) -> tuple[int, int] | None:
+    match = re.fullmatch(r"(19|20)?(\d{2})(?:[-\u2013](\d{2,4}))?", value.strip())
+    if not match:
+        return None
+    prefix, start_short, end_raw = match.groups()
+    start = int((prefix or "20") + start_short)
+    if not end_raw:
+        return start, start
+    if len(end_raw) == 2:
+        end = int(str(start)[:2] + end_raw)
+    else:
+        end = int(end_raw)
+    return start, end
+
+
+def _extract_vehicle_applications_from_source(text: str) -> list[dict[str, Any]]:
+    source = re.sub(r"\s+", " ", text)
+    apps: list[dict[str, Any]] = []
+    for match in re.finditer(
+        r"\b(?P<years>(?:19|20)?\d{2}(?:[-\u2013]\d{2,4})?)\s+"
+        r"(?P<model>[A-Z][A-Z0-9 /-]{1,24}?)\s*\(\s*(?P<make>[A-Za-z -]{3,18})\s*\)",
+        source,
+    ):
+        years = _expand_year_range(match.group("years"))
+        if not years:
+            continue
+        make_raw = " ".join(match.group("make").split()).title()
+        make = "Mercedes-Benz" if make_raw in {"Mercedes", "Mercedes Benz"} else make_raw
+        if make not in CANONICAL_MODELS:
+            continue
+        model = " ".join(match.group("model").split()).strip(" |_-")
+        model = re.sub(r"^O(?=X\d)", "Q", model, flags=re.IGNORECASE)
+        model, score = canonicalize_model(make, model)
+        if score < 0.78 and model not in CANONICAL_MODELS.get(make, []):
+            continue
+        apps.append({"make": make, "model": model, "year_from": years[0], "year_to": years[1]})
+    deduped: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, int, int]] = set()
+    for app in apps:
+        key = (app["make"], app["model"], int(app["year_from"]), int(app["year_to"]))
+        if key not in seen:
+            seen.add(key)
+            deduped.append(app)
+    known_makes = "|".join(re.escape(make) for make in sorted(CANONICAL_MODELS, key=len, reverse=True))
+    for match in re.finditer(
+        rf"\b(?P<years>(?:19|20)?\d{{2}}(?:[-\u2013]\d{{2,4}})?)\s+"
+        rf"(?P<model>[A-Z][A-Z0-9 /-]{{1,24}}?)\s*\(\s*(?P<make>{known_makes})(?=\s*(?:[)|]|\b(?:19|20)\d{{2}}\b|$))",
+        source,
+        re.IGNORECASE,
+    ):
+        years = _expand_year_range(match.group("years"))
+        if not years:
+            continue
+        make = " ".join(match.group("make").split()).title()
+        if make.lower() == "mercedes-benz":
+            make = "Mercedes-Benz"
+        model = " ".join(match.group("model").split()).strip(" |_-")
+        model = re.sub(r"^O(?=X\d)", "Q", model, flags=re.IGNORECASE)
+        model, score = canonicalize_model(make, model)
+        if score < 0.78 and model not in CANONICAL_MODELS.get(make, []):
+            continue
+        key = (make, model, years[0], years[1])
+        if key not in seen:
+            seen.add(key)
+            deduped.append({"make": make, "model": model, "year_from": years[0], "year_to": years[1]})
+    return deduped
+
+
+def _normalize_vehicle_application(app: dict[str, Any]) -> dict[str, Any] | None:
+    make = str(app.get("make") or "").strip()
+    model = str(app.get("model") or "").strip()
+    if not make or not model:
+        return None
+    make = "Mercedes-Benz" if make in {"Mercedes", "Mercedes Benz"} else make
+    if make not in CANONICAL_MODELS:
+        return None
+    model = re.sub(r"^O(?=X\d)", "Q", model, flags=re.IGNORECASE)
+    canonical_model, score = canonicalize_model(make, model)
+    if score < 0.78 and canonical_model not in CANONICAL_MODELS.get(make, []):
+        return None
+    try:
+        year_from = int(app.get("year_from") or 0)
+        year_to = int(app.get("year_to") or 0)
+    except (TypeError, ValueError):
+        return None
+    if not year_from or not year_to:
+        return None
+    return {"make": make, "model": canonical_model, "year_from": year_from, "year_to": year_to}
+
+
 def _first_match(text: str, pattern: str) -> str:
     match = re.search(pattern, text, re.IGNORECASE)
     return match.group(1) if match else ""
@@ -1386,6 +1564,28 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
     key_remote = merged.setdefault("key_remote", {})
     making_key = merged.setdefault("making_key", {})
     mechanical = merged.setdefault("mechanical_key", {})
+    source_apps = _extract_vehicle_applications_from_source(source_text)
+    if source_apps:
+        existing_apps = merged.get("vehicle_applications") if isinstance(merged.get("vehicle_applications"), list) else []
+        combined_apps: list[dict[str, Any]] = []
+        seen_apps: set[tuple[str, str, int, int]] = set()
+        for app in [*existing_apps, *source_apps]:
+            if not isinstance(app, dict):
+                continue
+            normalized_app = _normalize_vehicle_application(app)
+            if not normalized_app:
+                continue
+            key = (
+                normalized_app["make"],
+                normalized_app["model"],
+                int(normalized_app["year_from"]),
+                int(normalized_app["year_to"]),
+            )
+            if key[0] and key[1] and key[2] and key[3] and key not in seen_apps:
+                seen_apps.add(key)
+                combined_apps.append(normalized_app)
+        if combined_apps:
+            merged["vehicle_applications"] = combined_apps
     if isinstance(programming, dict) and re.search(r"Dealer\s+transponder\s+system", source, re.IGNORECASE):
         programming.setdefault(
             "system_requirement",
@@ -1393,6 +1593,17 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
         )
     if isinstance(key_remote, dict) and re.search(r"\bKESSY\b", source, re.IGNORECASE):
         key_remote.setdefault("proximity_option", "Some models may be equipped with the KESSY proximity option.")
+    source_remote_options = _extract_remote_options_from_source(source)
+    if isinstance(key_remote, dict) and source_remote_options:
+        existing_options = key_remote.get("known_options") if isinstance(key_remote.get("known_options"), list) else []
+        combined_options = sanitize_remote_options([*existing_options, *source_remote_options])
+        if combined_options:
+            key_remote["known_options"] = combined_options
+        if not key_remote.get("frequency"):
+            first_frequency = next((item.get("frequency") for item in combined_options if item.get("frequency")), "")
+            if first_frequency:
+                key_remote["frequency"] = first_frequency
+        key_remote.setdefault("remote_type", "Remote / proximity fob")
     if isinstance(making_key, dict) and re.search(
         r"No\s*codes\s*on\s*any\s*locks|Nocodesonanylocks",
         source,
@@ -1405,6 +1616,11 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
     decoder_rows = _extract_decoder_rows(source)
     if decoder_rows:
         merged["decoders"] = decoder_rows
+    extracted_mechanical = _extract_mechanical_spec_row(source)
+    if isinstance(mechanical, dict) and extracted_mechanical:
+        for field, value in extracted_mechanical.items():
+            if value:
+                mechanical[field] = value
     if isinstance(mechanical, dict) and re.search(
         r"INTERNAL.{0,24}(?:MILLING|MITUNG)",
         source,
