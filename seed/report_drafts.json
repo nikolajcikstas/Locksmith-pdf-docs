@@ -363,8 +363,8 @@
         {
           "make": "Volkswagen",
           "model": "Routan",
-          "year_to": 2012,
-          "year_from": 2009
+          "year_from": 2009,
+          "year_to": 2012
         }
       ]
     }
@@ -636,7 +636,8 @@
                   "filled",
                   "filled",
                   "filled",
-                  "filled"
+                  "filled",
+                  ""
                 ],
                 [
                   "Doors / trunk / hatch",
@@ -646,10 +647,19 @@
                   "filled",
                   "filled",
                   "filled",
-                  "filled"
+                  "filled",
+                  ""
                 ],
                 [
-                  "Glove box"
+                  "Glove box",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
                 ]
               ]
             }
@@ -886,63 +896,7 @@
           "action": "Follow airbag and retainer safety steps before removing ignition or column components."
         }
       ],
-      "procedure_diagrams": [
-        {
-          "title": "Lock Positions",
-          "panels": [
-            {
-              "rows": [
-                [
-                  "Ignition",
-                  "filled",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  ""
-                ],
-                [
-                  "Doors / trunk / hatch",
-                  "filled",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  ""
-                ],
-                [
-                  "Glove box",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  ""
-                ]
-              ],
-              "label": "Lock positions",
-              "columns": [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8"
-              ]
-            }
-          ],
-          "caption": "Diagram showing lock positions for key making.",
-          "placement": "making_key"
-        }
-      ],
+      "procedure_diagrams": [],
       "technician_checklist": {
         "Final tests": [
           "Mechanical key operation",
@@ -966,20 +920,20 @@
         {
           "make": "Cadillac",
           "model": "Escalade",
-          "year_to": 2020,
-          "year_from": 2015
+          "year_from": 2015,
+          "year_to": 2020
         },
         {
           "make": "Cadillac",
           "model": "SRX",
-          "year_to": 2016,
-          "year_from": 2015
+          "year_from": 2015,
+          "year_to": 2016
         },
         {
           "make": "Cadillac",
           "model": "XT4",
-          "year_to": 2021,
-          "year_from": 2019
+          "year_from": 2019,
+          "year_to": 2021
         }
       ]
     }
@@ -1167,63 +1121,7 @@
           "action": "Follow airbag and retainer safety steps before removing ignition or column components."
         }
       ],
-      "procedure_diagrams": [
-        {
-          "title": "Lock Positions",
-          "panels": [
-            {
-              "rows": [
-                [
-                  "Ignition",
-                  "filled",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  ""
-                ],
-                [
-                  "Doors / trunk / hatch",
-                  "filled",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  ""
-                ],
-                [
-                  "Glove box",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  ""
-                ]
-              ],
-              "label": "Lock positions",
-              "columns": [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8"
-              ]
-            }
-          ],
-          "caption": "Lock positions for key making.",
-          "placement": "making_key"
-        }
-      ],
+      "procedure_diagrams": [],
       "technician_checklist": {
         "Final tests": [
           "Mechanical key operation",
@@ -1247,32 +1145,32 @@
         {
           "make": "Kia",
           "model": "Sorento",
-          "year_to": 2012,
-          "year_from": 2010
+          "year_from": 2010,
+          "year_to": 2012
         },
         {
           "make": "Kia",
           "model": "Optima",
-          "year_to": 2013,
-          "year_from": 2010
+          "year_from": 2010,
+          "year_to": 2013
         },
         {
           "make": "Kia",
           "model": "Rio",
-          "year_to": 2011,
-          "year_from": 2010
+          "year_from": 2010,
+          "year_to": 2011
         },
         {
           "make": "Hyundai",
           "model": "Elantra Touring",
-          "year_to": 2012,
-          "year_from": 2008
+          "year_from": 2008,
+          "year_to": 2012
         },
         {
           "make": "Hyundai",
           "model": "Tucson",
-          "year_to": 2014,
-          "year_from": 2011
+          "year_from": 2011,
+          "year_to": 2014
         }
       ]
     }
@@ -1423,62 +1321,7 @@
           "action": "Follow airbag and retainer safety steps before removing ignition or column components."
         }
       ],
-      "procedure_diagrams": [
-        {
-          "panels": [
-            {
-              "rows": [
-                [
-                  "Ignition",
-                  "filled",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  ""
-                ],
-                [
-                  "Doors / trunk / hatch",
-                  "filled",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  ""
-                ],
-                [
-                  "Glove box",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  "",
-                  ""
-                ]
-              ],
-              "label": "Lock positions",
-              "columns": [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8"
-              ]
-            }
-          ],
-          "caption": "Lock positions",
-          "placement": "making_key"
-        }
-      ],
+      "procedure_diagrams": [],
       "technician_checklist": {
         "Final tests": [
           "Mechanical key operation",
@@ -1502,38 +1345,38 @@
         {
           "make": "Acura",
           "model": "Integra",
-          "year_to": 1999,
-          "year_from": 1990
+          "year_from": 1990,
+          "year_to": 1999
         },
         {
           "make": "Acura",
           "model": "Legend",
-          "year_to": 1996,
-          "year_from": 1990
+          "year_from": 1990,
+          "year_to": 1996
         },
         {
           "make": "Acura",
           "model": "Vigor",
-          "year_to": 1998,
-          "year_from": 1995
+          "year_from": 1995,
+          "year_to": 1998
         },
         {
           "make": "Acura",
           "model": "NSX",
-          "year_to": 1996,
-          "year_from": 1991
+          "year_from": 1991,
+          "year_to": 1996
         },
         {
           "make": "Acura",
           "model": "TL",
-          "year_to": 1998,
-          "year_from": 1995
+          "year_from": 1995,
+          "year_to": 1998
         },
         {
           "make": "Acura",
           "model": "Vigor",
-          "year_to": 1996,
-          "year_from": 1991
+          "year_from": 1991,
+          "year_to": 1996
         }
       ]
     }

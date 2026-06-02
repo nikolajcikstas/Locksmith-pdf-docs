@@ -149,6 +149,8 @@ def render_asset_cards(assets: Sequence[Mapping[str, Any]], placement: str, syst
         embedded_svg = ""
         if diagram_data:
             schema = enrich_diagram_schema_for_system(dict(diagram_data), system or {}, placement)
+            if not is_informative_diagram_schema(schema):
+                continue
             embedded_svg = render_original_diagram_svg(schema)
             caption = str(schema.get("caption") or schema.get("title") or asset.get("rewritten_caption") or asset.get("title") or "Procedure image")
         else:
@@ -233,6 +235,8 @@ def render_procedure_diagrams(system: Mapping[str, Any], placement: str) -> str:
         if str(diagram.get("placement") or "") != placement:
             continue
         schema = enrich_diagram_schema_for_system(dict(diagram), system, placement)
+        if not is_informative_diagram_schema(schema):
+            continue
         svg = render_original_diagram_svg(schema)
         caption = str(diagram.get("caption") or diagram.get("title") or "Procedure reference").strip()
         cards.append(
@@ -260,6 +264,34 @@ def mechanical_profile(system: Mapping[str, Any]) -> str:
     if "/" in profile:
         profile = " / ".join(part.strip() for part in profile.split("/")[:2] if part.strip())
     return profile[:36]
+
+
+def is_informative_diagram_schema(schema: Mapping[str, Any]) -> bool:
+    """Keep only diagrams that explain a real technician decision."""
+    if str(schema.get("visual_type") or "") == "blade_orientation":
+        return bool(str(schema.get("blade_profile") or "").strip())
+    panels = schema.get("panels") if isinstance(schema.get("panels"), Sequence) else []
+    for panel in panels:
+        if not isinstance(panel, Mapping):
+            continue
+        rows = panel.get("rows") if isinstance(panel.get("rows"), Sequence) else []
+        columns = panel.get("columns") if isinstance(panel.get("columns"), Sequence) else []
+        if [str(value).strip() for value in columns] != [str(position) for position in range(1, 9)]:
+            continue
+        filled_by_row = []
+        for row in rows:
+            if not isinstance(row, Sequence) or isinstance(row, (str, bytes)) or len(row) < 2:
+                continue
+            label = str(row[0] or "").upper()
+            if not any(token in label for token in ("IGNITION", "DOOR", "TRUNK", "HATCH", "GLOVE")):
+                continue
+            count = sum(str(value).strip().lower() == "filled" for value in list(row)[1:9])
+            if count:
+                filled_by_row.append(count)
+        # A single marked position repeated across rows is usually OCR noise or a generic,
+        # non-actionable image. Useful source maps show a real range of positions.
+        return sum(filled_by_row) >= 4 and max(filled_by_row, default=0) >= 2
+    return False
 
 
 def render_standard_mechanical_diagram(system: Mapping[str, Any]) -> str:

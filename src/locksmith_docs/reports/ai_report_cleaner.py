@@ -1113,7 +1113,8 @@ def sanitize_structured_sections(draft: dict[str, Any]) -> dict[str, Any]:
                 panel["rows"] = rows
                 panels.append(panel)
             normalized["panels"] = panels
-            normalized_diagrams.append(normalized)
+            if is_informative_diagram(normalized):
+                normalized_diagrams.append(normalized)
         cleaned["procedure_diagrams"] = normalized_diagrams
         _sync_mechanical_tables_from_diagrams(cleaned, normalized_diagrams)
     elif diagrams is not None:
@@ -1359,6 +1360,44 @@ def _is_descending_cut_table(table: dict[str, Any], required_count: int) -> bool
     return all(values[index] > values[index + 1] for index in range(len(values) - 1))
 
 
+def is_informative_diagram(diagram: dict[str, Any]) -> bool:
+    """Reject generic or low-data diagrams before publication."""
+    if str(diagram.get("visual_type") or "") == "blade_orientation":
+        return bool(str(diagram.get("blade_profile") or "").strip())
+    panels = diagram.get("panels") if isinstance(diagram.get("panels"), list) else []
+    for panel in panels:
+        if not isinstance(panel, dict):
+            continue
+        columns = [str(value).strip() for value in panel.get("columns", [])]
+        if columns != [str(position) for position in range(1, 9)]:
+            continue
+        filled_by_row: list[int] = []
+        for row in panel.get("rows", []):
+            if not isinstance(row, list) or len(row) < 2:
+                continue
+            label = str(row[0] or "").upper()
+            if not any(token in label for token in ("IGNITION", "DOOR", "TRUNK", "HATCH", "GLOVE")):
+                continue
+            count = sum(str(value).strip().lower() == "filled" for value in row[1:9])
+            if count:
+                filled_by_row.append(count)
+        return sum(filled_by_row) >= 4 and max(filled_by_row, default=0) >= 2
+    return False
+
+
+def source_has_lock_position_visual(source: str) -> bool:
+    """Detect actual lock-position visuals, not ordinary procedure prose."""
+    normalized = re.sub(r"\s+", " ", source.upper())
+    has_position_header = bool(re.search(r"\b(?:1\s+2\s+3\s+4\s+5\s+6\s+7\s+8|POSITIONS?|SPACES)\b", normalized))
+    has_visual_lock_labels = bool(
+        re.search(r"(?:>\s*)?IGNITION(?:\s*\([^)]+\))?.{0,80}(?:>\s*)?(?:DOORS?|TRUNK|HATCH)", normalized)
+        or re.search(r"(?:DOORS?|TRUNK|HATCH).{0,80}IGNITION", normalized)
+    )
+    marked_grid_hint = bool(re.search(r"\b(?:FILLED|MARK(?:ED)?|SQUARE|WAFER|PIN)\b", normalized))
+    compact_rows = len(re.findall(r"\b(?:IGNITION|DOORS?|TRUNK|HATCH|GLOVE\s+BOX)\b.{0,60}\b[1-8]\b", normalized)) >= 2
+    return has_visual_lock_labels and (has_position_header or marked_grid_hint or compact_rows)
+
+
 def _sync_mechanical_tables_from_diagrams(draft: dict[str, Any], diagrams: list[dict[str, Any]]) -> None:
     mechanical = draft.get("mechanical_key")
     if not isinstance(mechanical, dict):
@@ -1515,12 +1554,11 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
             if part_number not in rendered:
                 issues.append(f"Source lock-parts table includes part number {part_number}, but it is missing from the structured report.")
                 break
-    lock_labels = sum(label in source for label in ("IGNITION", "DOORS", "TRUNK", "GLOVE BOX"))
-    if lock_labels >= 2 and "METHOD" in source:
+    if source_has_lock_position_visual(source_text):
         diagrams = draft.get("procedure_diagrams") if isinstance(draft.get("procedure_diagrams"), list) else []
         has_lock_diagram = False
         for diagram in diagrams:
-            if not isinstance(diagram, dict):
+            if not isinstance(diagram, dict) or not is_informative_diagram(diagram):
                 continue
             panels = diagram.get("panels") if isinstance(diagram.get("panels"), list) else []
             for panel in panels:
