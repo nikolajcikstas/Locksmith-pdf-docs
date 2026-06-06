@@ -19,6 +19,7 @@ from locksmith_docs.reports.ai_report_cleaner import (
     report_cleanup_enabled,
     report_completeness_issues,
     report_quality_issues,
+    sanitize_structured_sections,
 )
 
 
@@ -28,7 +29,7 @@ DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "report_drafts.json"
 DEFAULT_CACHE = PROJECT_ROOT / "data" / "ai_report_cache.json"
 DEFAULT_PAGES_INPUT = PROJECT_ROOT / "data" / "imported_pages.json"
 DEFAULT_VERIFIED_FACTS = PROJECT_ROOT / "data" / "verified_report_facts.json"
-CACHE_VERSION = "complete-report-v31-lock-parts-inventory"
+CACHE_VERSION = "complete-report-v37-source-map-fallback"
 
 
 def load_sections(path: Path) -> list[dict[str, Any]]:
@@ -247,6 +248,7 @@ def build_drafts(
                 processed_by_ai = True
         draft = apply_verified_facts(draft, str(draft.get("code") or ""), DEFAULT_VERIFIED_FACTS)
         draft = merge_source_supported_facts(draft, source_text)
+        draft = sanitize_structured_sections(draft)
         draft["title"] = report_title(str(draft.get("code") or ""), draft.get("vehicle_applications") or [])
         publication_issues = report_quality_issues(draft) + report_completeness_issues(draft, source_text)
         if rejected_cached:

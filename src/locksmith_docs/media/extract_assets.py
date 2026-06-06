@@ -573,52 +573,62 @@ def render_integrated_key_position_svg(panel: dict[str, Any], schema: dict[str, 
         str(schema.get("subtitle") or f"{profile} position map. Read positions from handle to tip.")
     )[:92]
     width = 1120
-    height = 360
     rows = [
         row for row in (panel.get("rows") or [])
         if isinstance(row, list) and row
-    ][:3]
+    ][:6]
+    columns = [
+        str(value).strip()
+        for value in panel.get("columns", []) if str(value).strip()
+    ] if isinstance(panel.get("columns"), list) else []
+    column_count = len(columns) if len(columns) in {8, 10} else 8
+    height = max(380, 290 + len(rows) * 44)
     note = clean_svg_text(str(panel.get("note") or ""))[:88]
     blade_x = 222
-    blade_end = 902
-    cell_w = 85
-    track_y = [162, 204, 246]
-    colors = ["#0f766e", "#2563a6", "#c47a14"]
+    blade_end = 892
+    cell_w = (blade_end - blade_x) / column_count
+    top_y = 138
+    row_gap = 38
+    blade_bottom = top_y + max(3, len(rows)) * row_gap + 30
+    tip_y = (top_y + blade_bottom) / 2
+    track_y = [top_y + 27 + index * row_gap for index in range(max(1, len(rows)))]
+    colors = ["#0f766e", "#2563a6", "#c47a14", "#7c3aed", "#be123c", "#3f6212"]
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img">',
         '<rect width="100%" height="100%" rx="20" fill="#f7fafb"/>',
-        '<style>text{font-family:Arial,sans-serif;fill:#142536}.title{font-size:21px;font-weight:700}.sub{font-size:13px;fill:#526477}.num{font-size:14px;font-weight:700;fill:#526477}.legend{font-size:13px;font-weight:700}.note{font-size:13px;fill:#526477}.outline{stroke:#264456;stroke-width:2.4}.guide{stroke:#d3dfe4;stroke-width:1}.head{fill:#142d3c}.hole{fill:#f7fafb}</style>',
+        '<style>text{font-family:Arial,sans-serif;fill:#142536}.title{font-size:22px;font-weight:700}.sub{font-size:13px;fill:#526477}.num{font-size:14px;font-weight:700;fill:#526477}.row-label{font-size:13px;font-weight:700}.note{font-size:13px;fill:#526477}.outline{stroke:#264456;stroke-width:2.4}.guide{stroke:#d3dfe4;stroke-width:1}.head{fill:#142d3c}.hole{fill:#f7fafb}</style>',
         f'<text class="title" x="34" y="40">{xml_escape(title)}</text>',
         f'<text class="sub" x="34" y="62">{xml_escape(subtitle)}</text>',
-        # Compact legend in one visual line.
-        f'<circle cx="582" cy="38" r="7" fill="{colors[0]}"/><text class="legend" x="598" y="43">Ignition</text>',
-        f'<circle cx="690" cy="38" r="7" fill="{colors[1]}"/><text class="legend" x="706" y="43">Doors / trunk / hatch</text>',
-        f'<circle cx="905" cy="38" r="7" fill="{colors[2]}"/><text class="legend" x="921" y="43">Glove box*</text>',
         # Integrated key bow and blade outline.
-        '<path class="head" d="M54 133 C54 104 77 82 106 82 H174 C203 82 226 105 226 134 V270 C226 299 203 322 174 322 H106 C77 322 54 300 54 271 Z"/>',
-        '<path class="hole" d="M100 149 C100 131 114 117 132 117 H151 C169 117 183 131 183 149 V253 C183 271 169 286 151 286 H132 C114 286 100 272 100 253 Z"/>',
-        f'<path fill="#ffffff" class="outline" d="M{blade_x - 8} 134 H{blade_end} L953 202 L{blade_end} 270 H{blade_x - 8} Z"/>',
-        f'<line class="guide" x1="{blade_x}" y1="190" x2="{blade_end + 36}" y2="190"/>',
-        f'<line class="guide" x1="{blade_x}" y1="232" x2="{blade_end + 36}" y2="232"/>',
+        '<path class="head" d="M54 141 C54 112 77 90 106 90 H174 C203 90 226 113 226 142 V286 C226 315 203 338 174 338 H106 C77 338 54 316 54 287 Z"/>',
+        '<path class="hole" d="M100 157 C100 139 114 125 132 125 H151 C169 125 183 139 183 157 V269 C183 287 169 302 151 302 H132 C114 302 100 288 100 269 Z"/>',
+        f'<path fill="#ffffff" class="outline" d="M{blade_x - 8} {top_y} H{blade_end} L953 {tip_y:.1f} L{blade_end} {blade_bottom} H{blade_x - 8} Z"/>',
     ]
-    for index in range(8):
+    for row_index in range(1, max(3, len(rows))):
+        y = top_y + row_index * row_gap
+        parts.append(f'<line class="guide" x1="{blade_x}" y1="{y}" x2="{blade_end + 36}" y2="{y}"/>')
+    for index in range(column_count):
         x = blade_x + index * cell_w
         center = x + cell_w / 2
-        parts.append(f'<line class="guide" x1="{x}" y1="134" x2="{x}" y2="270"/>')
-        parts.append(f'<text class="num" x="{center}" y="120" text-anchor="middle">{index + 1}</text>')
-    parts.append(f'<line class="guide" x1="{blade_end}" y1="134" x2="{blade_end}" y2="270"/>')
+        parts.append(f'<line class="guide" x1="{x:.1f}" y1="{top_y}" x2="{x:.1f}" y2="{blade_bottom}"/>')
+        parts.append(f'<text class="num" x="{center:.1f}" y="{top_y - 16}" text-anchor="middle">{index + 1}</text>')
+    parts.append(f'<line class="guide" x1="{blade_end}" y1="{top_y}" x2="{blade_end}" y2="{blade_bottom}"/>')
     for row_index, row in enumerate(rows):
         y = track_y[row_index]
-        for position in range(1, 9):
+        raw_label = str(row[0] if row else "").strip() or f"Lock row {row_index + 1}"
+        label = clean_svg_text(raw_label.replace("/", " / "))[:34]
+        parts.append(f'<rect x="978" y="{y - 10}" width="20" height="20" rx="5" fill="{colors[row_index]}"/>')
+        parts.append(f'<text class="row-label" x="1010" y="{y + 5}">{xml_escape(label)}</text>')
+        for position in range(1, column_count + 1):
             value = str(row[position] if position < len(row) else "").strip().lower()
             if value in {"filled", "mark", "x", "yes", "solid", "square"}:
                 cx = blade_x + (position - 1) * cell_w + cell_w / 2
-                parts.append(f'<rect x="{cx - 11}" y="{y - 11}" width="22" height="22" rx="4" fill="{colors[row_index]}"/>')
+                parts.append(f'<rect x="{cx - 10:.1f}" y="{y - 10}" width="20" height="20" rx="4" fill="{colors[row_index]}"/>')
     parts.extend([
-        '<text class="sub" x="90" y="344">HANDLE</text>',
-        '<text class="sub" x="866" y="306">TIP</text>',
-        f'<text class="note" x="338" y="316">{xml_escape(note)}</text>' if note else "",
-        '<text class="note" x="338" y="338">Filled markers identify the cut positions used by each lock.</text>',
+        f'<text class="sub" x="90" y="{blade_bottom + 35}">HANDLE</text>',
+        f'<text class="sub" x="866" y="{blade_bottom + 35}">TIP</text>',
+        f'<text class="note" x="338" y="{blade_bottom + 34}">{xml_escape(note)}</text>' if note else "",
+        f'<text class="note" x="338" y="{blade_bottom + 58}">Filled markers identify the cut positions used by each listed lock group.</text>',
         '</svg>',
     ])
     return "".join(parts)
@@ -665,11 +675,29 @@ def has_usable_diagram_schema(schema: dict[str, Any]) -> bool:
         if not isinstance(panel, dict) or not str(panel.get("label") or "").strip():
             continue
         rows = panel.get("rows") or []
+        columns = [
+            str(value).strip()
+            for value in panel.get("columns", []) if str(value).strip()
+        ] if isinstance(panel.get("columns"), list) else []
+        if columns in ([str(position) for position in range(1, 9)], [str(position) for position in range(1, 11)]):
+            column_count = len(columns)
+            filled_by_row: list[int] = []
+            for row in rows:
+                if not isinstance(row, list) or not row:
+                    continue
+                label = str(row[0] or "").upper()
+                if not any(token in label for token in ("IGNITION", "DOOR", "TRUNK", "HATCH", "GLOVE", "SPARE", "STOWAGE")):
+                    continue
+                filled_by_row.append(
+                    sum(str(value).strip().lower() == "filled" for value in row[1:column_count + 1])
+                )
+            if sum(filled_by_row) >= 4 and max(filled_by_row, default=0) >= 2:
+                return True
+            continue
         meaningful_rows = [
             row for row in rows
             if isinstance(row, list) and any(str(cell or "").strip() for cell in row)
         ]
-        columns = panel.get("columns") or []
         if len(meaningful_rows) >= 2 or (len(meaningful_rows) == 1 and len(columns) >= 2):
             return True
     return False

@@ -72,7 +72,7 @@ def has_value(value: Any) -> bool:
     if value is None or value == "":
         return False
     if isinstance(value, str):
-        return value.strip() not in {"", "-", "Check source", "Check source.", "Check source pages", "None", "n/a", "N/A"}
+        return value.strip() not in {"", "-", "Check source", "Check source.", "Check source pages", "None"}
     if isinstance(value, Mapping):
         return any(has_value(item) for item in value.values())
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
@@ -211,7 +211,7 @@ def safe_lock_part_records(records: Sequence[Mapping[str, Any]]) -> list[Mapping
         text = " ".join(str(value or "") for value in record.values())
         if not (
             re.search(r"\b(?:STRATTEC|ASP|PIN\s*kit|part|available|not\s+available)\b", text, re.IGNORECASE)
-            or re.search(r"\b70\d{4}\b", text)
+            or re.search(r"\b70\d{4,5}\b", text)
         ):
             continue
         if re.search(r"\b(?:method|decode|decoder|reader|determine|working key|disassemble|no\s*codes)\b", text, re.IGNORECASE):
@@ -276,16 +276,21 @@ def is_informative_diagram_schema(schema: Mapping[str, Any]) -> bool:
             continue
         rows = panel.get("rows") if isinstance(panel.get("rows"), Sequence) else []
         columns = panel.get("columns") if isinstance(panel.get("columns"), Sequence) else []
-        if [str(value).strip() for value in columns] != [str(position) for position in range(1, 9)]:
+        normalized_columns = [str(value).strip() for value in columns]
+        if normalized_columns not in (
+            [str(position) for position in range(1, 9)],
+            [str(position) for position in range(1, 11)],
+        ):
             continue
+        column_count = len(normalized_columns)
         filled_by_row = []
         for row in rows:
             if not isinstance(row, Sequence) or isinstance(row, (str, bytes)) or len(row) < 2:
                 continue
             label = str(row[0] or "").upper()
-            if not any(token in label for token in ("IGNITION", "DOOR", "TRUNK", "HATCH", "GLOVE")):
+            if not any(token in label for token in ("IGNITION", "DOOR", "TRUNK", "HATCH", "GLOVE", "SPARE", "STOWAGE")):
                 continue
-            count = sum(str(value).strip().lower() == "filled" for value in list(row)[1:9])
+            count = sum(str(value).strip().lower() == "filled" for value in list(row)[1:column_count + 1])
             if count:
                 filled_by_row.append(count)
         # A single marked position repeated across rows is usually OCR noise or a generic,

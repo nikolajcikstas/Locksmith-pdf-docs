@@ -344,6 +344,10 @@ def normalize_section_code(value: str, source_document: str = "", context: str =
             if prefix in {"AVB", "AW"}:
                 prefix = "AV"
             code = f"{prefix}-{num}"
+    if "domestic" in source_document.lower():
+        gm_continued = re.fullmatch(r"GM-([FBKP])4(\d{2})", code)
+        if gm_continued and "CONTINU" in context.upper():
+            code = f"GM-{gm_continued.group(1)}{int(gm_continued.group(2))}"
     lower_document = source_document.lower()
     for marker, repairs in DOCUMENT_PREFIX_REPAIRS.items():
         if marker in lower_document and "-" in code:
