@@ -581,7 +581,7 @@ def render_integrated_key_position_svg(panel: dict[str, Any], schema: dict[str, 
         str(value).strip()
         for value in panel.get("columns", []) if str(value).strip()
     ] if isinstance(panel.get("columns"), list) else []
-    column_count = len(columns) if len(columns) in {8, 10} else 8
+    column_count = len(columns) if len(columns) in {7, 8, 10} else 8
     height = max(380, 290 + len(rows) * 44)
     note = clean_svg_text(str(panel.get("note") or ""))[:88]
     blade_x = 222
@@ -679,7 +679,11 @@ def has_usable_diagram_schema(schema: dict[str, Any]) -> bool:
             str(value).strip()
             for value in panel.get("columns", []) if str(value).strip()
         ] if isinstance(panel.get("columns"), list) else []
-        if columns in ([str(position) for position in range(1, 9)], [str(position) for position in range(1, 11)]):
+        if columns in (
+            [str(position) for position in range(1, 8)],
+            [str(position) for position in range(1, 9)],
+            [str(position) for position in range(1, 11)],
+        ):
             column_count = len(columns)
             filled_by_row: list[int] = []
             for row in rows:

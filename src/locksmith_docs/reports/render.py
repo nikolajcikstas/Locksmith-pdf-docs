@@ -278,6 +278,7 @@ def is_informative_diagram_schema(schema: Mapping[str, Any]) -> bool:
         columns = panel.get("columns") if isinstance(panel.get("columns"), Sequence) else []
         normalized_columns = [str(value).strip() for value in columns]
         if normalized_columns not in (
+            [str(position) for position in range(1, 8)],
             [str(position) for position in range(1, 9)],
             [str(position) for position in range(1, 11)],
         ):

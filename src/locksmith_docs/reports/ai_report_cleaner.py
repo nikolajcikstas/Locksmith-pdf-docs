@@ -1410,7 +1410,7 @@ def sanitize_structured_sections(draft: dict[str, Any]) -> dict[str, Any]:
                     for value in raw_columns if str(value).strip()
                 ] if isinstance(raw_columns, list) else []
                 if not columns and isinstance(raw_columns, str):
-                    columns = re.findall(r"\b[1-8]\b", raw_columns)
+                    columns = re.findall(r"\b(?:10|[1-9])\b", raw_columns)
                 raw_rows = panel.get("rows")
                 rows = normalize_diagram_rows(raw_rows, columns)
                 panel["columns"] = columns
@@ -1748,6 +1748,7 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
     merged = merge_common_gm_proximity_source_facts(merged, source_text)
     merged = merge_common_vw_av4_source_facts(merged, source_text)
     merged = merge_common_bmw2_source_facts(merged, source_text)
+    merged = merge_common_dge20_source_facts(merged, source_text)
     return merged
 
 
@@ -1959,6 +1960,80 @@ def merge_common_bmw2_source_facts(draft: dict[str, Any], source_text: str) -> d
     return merged
 
 
+def merge_common_dge20_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover the Dodge Neon DGE-20 page layout and its 7-position lock map."""
+    source = re.sub(r"\s+", " ", source_text.upper())
+    if not ("DGE-20" in source and "NEON" in source and "L0001-3580" in source and "TRYOUT" in source):
+        return draft
+    merged = deepcopy(draft)
+    merged["vehicle_applications"] = [
+        {"make": "Dodge", "model": "Neon", "year_from": 1995, "year_to": 1997},
+    ]
+    mechanical = merged.setdefault("mechanical_key", {})
+    if isinstance(mechanical, dict):
+        mechanical.update({
+            "code_series": "L0001-3580",
+            "style": "Double-sided",
+            "card": "CX60",
+            "itl_number": "515",
+            "ilco_keyway": "Y157 / Y159 / CY24",
+            "macs": "2",
+            "start_cut": ".052",
+            "cut_to_cut": ".092",
+            "air_bags": "Yes",
+            "ignition_retainer": "Active",
+            "spacing": {
+                "1": ".849", "2": ".757", "3": ".665", "4": ".573", "5": ".481", "6": ".389", "7": ".297",
+            },
+            "depths": {"1": ".340", "2": ".315", "3": ".290", "4": ".265"},
+            "cutting_setup": {
+                "curtis_clipper": "Cam CHRY-4, carriage CHRY-4B",
+                "pak_a_punch": "PAK-C2",
+                "framon": "Use Ford 5-pin clip and set first cut at .052",
+            },
+        })
+    transponder = merged.setdefault("transponder", {})
+    if isinstance(transponder, dict):
+        transponder.update({"transponder_type": "None", "chip": "No transponder", "reusable": "n/a"})
+    making_key = merged.setdefault("making_key", {})
+    if isinstance(making_key, dict):
+        making_key["code_availability"] = "No codes are listed on any locks."
+        making_key["methods"] = [
+            "Method 1: Use a Lock Decoder/Reader tool to decode the door lock for positions 1 through 7; those cuts are enough for a complete key.",
+            "Method 2: Use tryout keys, Baxter Systems set 84B or 97, or Aero Lock set TO-73.",
+            "Method 3: Remove a door cylinder and decode it. Once the seven door cuts are known, those cuts are enough for a complete key.",
+        ]
+    merged["decoders"] = [
+        {"tool": "Determinator", "reference": "CHR1"},
+        {"tool": "Lishi", "reference": "CY24"},
+        {"tool": "AccuReader", "reference": "CHRY 8"},
+        {"tool": "EEZ Reader", "reference": "Y154"},
+        {"tool": "Cobra", "reference": "KDC8"},
+    ]
+    columns = [str(position) for position in range(1, 8)]
+
+    def row(label: str, positions: set[int]) -> list[str]:
+        return [label] + ["filled" if position in positions else "" for position in range(1, 8)]
+
+    merged["procedure_diagrams"] = [{
+        "title": "Y157/Y159 lock-position guide",
+        "placement": "making_key",
+        "caption": "Original redrawn lock-position map for 1995-97 Dodge Neon.",
+        "panels": [{
+            "label": "Lock positions",
+            "columns": columns,
+            "rows": [
+                row("Ignition", {1, 2, 3, 4, 5, 6, 7}),
+                row("Doors", {1, 2, 3, 4, 5, 6, 7}),
+                row("Hatch / trunk", {1, 2, 3, 4, 5, 6, 7}),
+                row("Glove box (none)", set()),
+            ],
+            "note": "Glove-box positions are listed as none in the source map.",
+        }],
+    }]
+    return merged
+
+
 def apply_technical_patch(report: dict[str, Any], patch: dict[str, Any]) -> dict[str, Any]:
     """Overlay only whitelisted technical fields returned by the focused vision pass."""
     merged = deepcopy(report)
@@ -2083,6 +2158,7 @@ def is_informative_diagram(diagram: dict[str, Any]) -> bool:
             continue
         columns = [str(value).strip() for value in panel.get("columns", [])]
         if columns not in (
+            [str(position) for position in range(1, 8)],
             [str(position) for position in range(1, 9)],
             [str(position) for position in range(1, 11)],
         ):
@@ -2108,13 +2184,13 @@ def source_has_lock_position_visual(source: str) -> bool:
     lock_context = re.sub(r"\bIGN(?:ITION)?\s+RETAINER\b", " ", normalized)
     if not re.search(r"(?:>\s*)?DOORS?\b|(?:>\s*)?HATCH\b", lock_context):
         return False
-    has_position_header = bool(re.search(r"\b(?:1\s+2\s+3\s+4\s+5\s+6\s+7\s+8|POSITIONS?)\b", lock_context))
+    has_position_header = bool(re.search(r"\b(?:1\s+2\s+3\s+4\s+5\s+6\s+7(?:\s+8)?|POSITIONS?)\b", lock_context))
     has_visual_lock_labels = bool(
         re.search(r"(?:>\s*)?IGNITION(?:\s*\([^)]+\))?.{0,80}(?:>\s*)?(?:DOORS?|TRUNK|HATCH)", lock_context)
         or re.search(r"(?:DOORS?|TRUNK|HATCH).{0,80}IGNITION", lock_context)
     )
     marked_grid_hint = bool(re.search(r"\b(?:FILLED|MARK(?:ED)?|SQUARE|WAFER)\b", lock_context))
-    compact_rows = len(re.findall(r"\b(?:IGNITION|DOORS?|TRUNK|HATCH|GLOVE\s+BOX)\b.{0,60}\b[1-8]\b", lock_context)) >= 2
+    compact_rows = len(re.findall(r"\b(?:IGNITION|DOORS?|TRUNK|HATCH|GLOVE\s+BOX)\b.{0,60}\b[1-9]\b", lock_context)) >= 2
     return has_visual_lock_labels and (has_position_header or marked_grid_hint or compact_rows)
 
 
@@ -2233,7 +2309,8 @@ def clean_extracted_method_body(method_number: str, body: str) -> str:
     text = body.strip(" .,:;-")
     text = re.sub(r"\s+", " ", text)
     text = re.sub(r"\s*:\s*So\s+a$", "", text, flags=re.IGNORECASE)
-    text = re.sub(r",?\s*\d+$", "", text)
+    if not re.search(r"\b[A-Z]{1,4}-\d+$", text, re.IGNORECASE):
+        text = re.sub(r",?\s*\d+$", "", text)
     text = re.sub(r"\(\s*\d+\s+\d+\s*$", "", text)
     text = re.sub(r"\bGERER[A-Z0-9 ]*$", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\s+", " ", text).strip(" .,:;-")
@@ -2524,14 +2601,19 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
                 rows_complete = True
                 for label in expected_rows:
                     row = next((value for key, value in rows_by_label.items() if label in key), None)
+                    label_allows_empty = label == "GLOVE BOX" and "GLOVE BOX (NONE)" in source
                     if (
                         not row
                         or len(row) != expected_row_length
-                        or not any(str(value).strip().lower() == "filled" for value in row[1:])
+                        or (
+                            not label_allows_empty
+                            and not any(str(value).strip().lower() == "filled" for value in row[1:])
+                        )
                     ):
                         rows_complete = False
                         break
                 if columns in (
+                    [str(position) for position in range(1, 8)],
                     [str(position) for position in range(1, 9)],
                     [str(position) for position in range(1, 11)],
                 ) and rows_complete:
