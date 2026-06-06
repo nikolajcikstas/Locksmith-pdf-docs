@@ -1336,7 +1336,7 @@ def sanitize_structured_sections(draft: dict[str, Any]) -> dict[str, Any]:
         for name in ("spacing", "depths", "cutting_setup"):
             if name in mechanical and not isinstance(mechanical[name], dict):
                 mechanical.pop(name, None)
-        if "spacing" in mechanical and not _is_descending_cut_table(mechanical["spacing"], 8):
+        if "spacing" in mechanical and not _is_valid_spacing_table(mechanical["spacing"], 5):
             mechanical.pop("spacing", None)
         if "depths" in mechanical and not _is_descending_cut_table(mechanical["depths"], 4):
             mechanical.pop("depths", None)
@@ -1746,6 +1746,7 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
         ):
             mechanical.pop("ignition_retainer", None)
     merged = merge_common_gm_proximity_source_facts(merged, source_text)
+    merged = merge_common_vw_av4_source_facts(merged, source_text)
     return merged
 
 
@@ -1840,6 +1841,67 @@ def merge_common_gm_proximity_source_facts(draft: dict[str, Any], source_text: s
             {"years": "", "models": "XT4 / XT5", "part": "GM 13510245 / ILCO PRX-CAD-5B4", "fcc_id": "HYQ2EB", "frequency": "433 MHz", "buttons": "5 or 6", "notes": "Verify exact model/year by VIN."},
             {"years": "", "models": "XTS", "part": "GM 13510254 / ILCO PRX-CAD-5B3", "fcc_id": "HYQ2AB", "frequency": "315 MHz", "buttons": "5", "notes": "Verify exact model/year by VIN."},
         ]
+    return merged
+
+
+def merge_common_vw_av4_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover the old VW AV-4 table layout where OCR often misses the 10-position spacing grid."""
+    source = re.sub(r"\s+", " ", source_text.upper())
+    if not ("AV-4" in source and "BEETLE" in source and "VW67S" in source and "CF3" in source and "VW-4" in source):
+        return draft
+    merged = deepcopy(draft)
+    merged["vehicle_applications"] = [
+        {"make": "Volkswagen", "model": "Beetle", "year_from": 1970, "year_to": 1978},
+        {"make": "Volkswagen", "model": "Beetle", "year_from": 1966, "year_to": 1970},
+        {"make": "Volkswagen", "model": "Bus", "year_from": 1966, "year_to": 1970},
+    ]
+    mechanical = merged.setdefault("mechanical_key", {})
+    if isinstance(mechanical, dict):
+        mechanical.update({
+            "code_series": "11K001-72K110 / 11M001-72M110 / 11R001-72R110",
+            "style": "Double-sided",
+            "card": "CF3 / CF4",
+            "itl_number": "444/445 or 356/357 depending on application",
+            "ilco_keyway": "VW71 / V27 / VW67S",
+            "macs": "3",
+            "start_cut": "Varies",
+            "cut_to_cut": "Varies",
+            "air_bags": "No",
+            "ignition_retainer": "Spring",
+            "milling": "Plain side and shoulder side spacing",
+            "spacing": {
+                "1": ".100", "2": ".260", "3": ".420", "4": ".580", "5": ".740",
+                "6": ".180", "7": ".340", "8": ".500", "9": ".600", "10": ".820",
+            },
+            "depths": {"1": ".260", "2": ".237", "3": ".216", "4": ".192"},
+            "cutting_setup": {
+                "plain_side": "Positions 1-5 use .100, .260, .420, .580, .740 from bow to tip.",
+                "shoulder_side": "Positions 6-10 use .180, .340, .500, .600, .820 from bow to tip.",
+                "hpc": "CF3 / XF3",
+                "curtis_clipper": "Cam VW-4, carriage VW-4A",
+                "itl": "445 shoulder side / 444 plain side",
+                "application_notes": "1970-78 Beetle and 1966-70 Beetle list cut-to-cut .160; 1966-70 Bus lists start cut .106 and variable cut-to-cut.",
+            },
+        })
+    transponder = merged.setdefault("transponder", {})
+    if isinstance(transponder, dict):
+        transponder.update({"transponder_type": "None", "chip": "No transponder", "reusable": "n/a"})
+    making_key = merged.setdefault("making_key", {})
+    if isinstance(making_key, dict):
+        making_key["code_availability"] = "Many older door locks have a stamped code; use the key code when it is available."
+        making_key["methods"] = [
+            "Method 1: Check the owner's manual for a dealer-written key code.",
+            "Method 2: Remove or pull out the handle/lock far enough to read the stamped code on the handle housing; if the code cannot be read, remove the handle/lock assembly and decode the tumblers.",
+            "Method 3: Impression the locks.",
+            "Method 4: If needed, remove the spring-retained ignition cylinder and either read the stamped code or disassemble it to make a working key; protect the turn-signal assembly while accessing the cylinder.",
+        ]
+    merged["decoders"] = [
+        {"tool": "Determinator", "reference": "n/a"},
+        {"tool": "Lishi", "reference": "n/a"},
+        {"tool": "AccuReader", "reference": "n/a"},
+        {"tool": "EEZ Reader", "reference": "n/a"},
+        {"tool": "Cobra", "reference": "n/a"},
+    ]
     return merged
 
 
@@ -1939,6 +2001,22 @@ def _is_descending_cut_table(table: dict[str, Any], required_count: int) -> bool
         except (KeyError, TypeError, ValueError):
             return False
     return all(values[index] > values[index + 1] for index in range(len(values) - 1))
+
+
+def _is_valid_spacing_table(table: dict[str, Any], required_count: int) -> bool:
+    if len(table) < required_count:
+        return False
+    valid_positions = 0
+    for key, value in table.items():
+        try:
+            position = int(str(key).strip())
+            number = float(str(value).strip())
+        except (TypeError, ValueError):
+            return False
+        if not (1 <= position <= 12 and 0.05 <= number <= 1.25):
+            return False
+        valid_positions += 1
+    return valid_positions >= required_count
 
 
 def is_informative_diagram(diagram: dict[str, Any]) -> bool:
@@ -2112,6 +2190,18 @@ def clean_extracted_method_body(method_number: str, body: str) -> str:
         return (
             "Remove and disassemble the glove-box lock for cut positions 2, 4, 6, 8, and 10; "
             "then impression the door or ignition for the odd-spaced cut positions"
+        )
+    if method_number == "2" and "HANDLE" in upper and ("CODE" in upper or "TUMBLERS" in upper):
+        return (
+            "Remove or pull out the handle/lock far enough to read the stamped code on the handle housing; "
+            "if the code cannot be read, remove the handle/lock assembly and decode the tumblers"
+        )
+    if method_number == "3" and "IMPRESSION" in upper and "LOCK" in upper:
+        return "Impression the locks"
+    if method_number == "4" and "IGNITION" in upper and "SPRING" in upper:
+        return (
+            "If needed, remove the spring-retained ignition cylinder and either read the stamped code or "
+            "disassemble it to make a working key; protect the turn-signal assembly while accessing the cylinder"
         )
     if method_number == "5" and "DOOR LOCK" in upper and "MAKE" in upper:
         return "Disassemble the door lock to make the key"
