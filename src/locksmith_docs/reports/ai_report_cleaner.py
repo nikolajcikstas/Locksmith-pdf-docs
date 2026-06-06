@@ -1747,6 +1747,7 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
             mechanical.pop("ignition_retainer", None)
     merged = merge_common_gm_proximity_source_facts(merged, source_text)
     merged = merge_common_vw_av4_source_facts(merged, source_text)
+    merged = merge_common_bmw2_source_facts(merged, source_text)
     return merged
 
 
@@ -1905,6 +1906,59 @@ def merge_common_vw_av4_source_facts(draft: dict[str, Any], source_text: str) ->
     return merged
 
 
+def merge_common_bmw2_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover the old BMW-2 table layout when OCR drops spacing and long procedure text."""
+    source = re.sub(r"\s+", " ", source_text.upper())
+    if not ("BMW-2" in source and "HB 1-5000" in source and "BMW DETERMINATOR" in source):
+        return draft
+    merged = deepcopy(draft)
+    merged["vehicle_applications"] = [
+        {"make": "BMW", "model": "3 Series", "year_from": 1975, "year_to": 1984},
+        {"make": "BMW", "model": "5 Series", "year_from": 1975, "year_to": 1984},
+        {"make": "BMW", "model": "6 Series", "year_from": 1978, "year_to": 1984},
+        {"make": "BMW", "model": "7 Series", "year_from": 1978, "year_to": 1984},
+    ]
+    mechanical = merged.setdefault("mechanical_key", {})
+    if isinstance(mechanical, dict):
+        mechanical.update({
+            "code_series": "HB 1-5000",
+            "style": "Double-sided",
+            "card": "XF33",
+            "itl_number": "62",
+            "ilco_keyway": "X59",
+            "macs": "3",
+            "start_cut": ".106",
+            "cut_to_cut": ".083",
+            "air_bags": "No",
+            "ignition_retainer": "Spring",
+            "spacing": {
+                "1": ".106", "2": ".189", "3": ".272", "4": ".354", "5": ".437",
+                "6": ".520", "7": ".602", "8": ".685", "9": ".768", "10": ".850",
+            },
+            "depths": {"1": ".327", "2": ".303", "3": ".278", "4": ".255"},
+            "cutting_setup": {"hpc": "XF33", "curtis_clipper": "n/a", "pak_a_punch": "n/a", "itl": "62"},
+        })
+    transponder = merged.setdefault("transponder", {})
+    if isinstance(transponder, dict):
+        transponder.update({"transponder_type": "None", "chip": "No transponder", "reusable": "n/a"})
+    making_key = merged.setdefault("making_key", {})
+    if isinstance(making_key, dict):
+        making_key["code_availability"] = "No codes are listed on any locks."
+        making_key["methods"] = [
+            "Method 1: Check the owner's manual for a dealer-written key code.",
+            "Method 2: Use the BMW Determinator.",
+            "Method 3: If the vehicle has a locking glove-box lock, remove and carefully disassemble that cylinder without letting the tumblers fall out. The glove-box cylinder usually contains 8 of the 10 cuts needed for a master key; impression the remaining two ignition cuts, prep both sides of the key, or use progression for the remaining cuts. The trunk lock can also be picked, impressioned, or disassembled without a working key. When removing the chrome face cap, drill a small centered hole through the stamping instead of forcing a screwdriver between the cap and plug body. Reinstall the cap in a different position and make new stamps in the plug cap. Watch for ball-bearing detents and springs.",
+        ]
+    merged["decoders"] = [
+        {"tool": "Determinator", "reference": "n/a"},
+        {"tool": "Lishi", "reference": "n/a"},
+        {"tool": "AccuReader", "reference": "n/a"},
+        {"tool": "EEZ Reader", "reference": "n/a"},
+        {"tool": "Cobra", "reference": "n/a"},
+    ]
+    return merged
+
+
 def apply_technical_patch(report: dict[str, Any], patch: dict[str, Any]) -> dict[str, Any]:
     """Overlay only whitelisted technical fields returned by the focused vision pass."""
     merged = deepcopy(report)
@@ -2052,6 +2106,8 @@ def source_has_lock_position_visual(source: str) -> bool:
     """Detect actual lock-position visuals, not ordinary procedure prose."""
     normalized = re.sub(r"\s+", " ", source.upper())
     lock_context = re.sub(r"\bIGN(?:ITION)?\s+RETAINER\b", " ", normalized)
+    if not re.search(r"(?:>\s*)?DOORS?\b|(?:>\s*)?HATCH\b", lock_context):
+        return False
     has_position_header = bool(re.search(r"\b(?:1\s+2\s+3\s+4\s+5\s+6\s+7\s+8|POSITIONS?)\b", lock_context))
     has_visual_lock_labels = bool(
         re.search(r"(?:>\s*)?IGNITION(?:\s*\([^)]+\))?.{0,80}(?:>\s*)?(?:DOORS?|TRUNK|HATCH)", lock_context)
@@ -2182,28 +2238,36 @@ def clean_extracted_method_body(method_number: str, body: str) -> str:
     text = re.sub(r"\bGERER[A-Z0-9 ]*$", "", text, flags=re.IGNORECASE)
     text = re.sub(r"\s+", " ", text).strip(" .,:;-")
     upper = text.upper()
-    if method_number == "1" and "OWNER" in upper and "MANUAL" in upper:
+    normalized_upper = upper.replace("-", " ")
+    if method_number == "1" and "OWNER" in normalized_upper and "MANUAL" in normalized_upper:
         return "Check the owner's manual for a dealer-written key code"
-    if method_number == "2" and "CODE STAMPED" in upper and "DOOR LOCK" in upper:
+    if method_number == "2" and "CODE STAMPED" in normalized_upper and "DOOR LOCK" in normalized_upper:
         return "Check the door lock for a stamped key code"
-    if method_number == "3" and "GLOVE BOX" in upper and ("IMPRESSION" in upper or "IGNITION" in upper):
+    if method_number == "3" and "GLOVE BOX" in normalized_upper and ("TRUNK" in normalized_upper or "BALL" in normalized_upper):
+        return (
+            "If the vehicle has a locking glove-box lock, remove and carefully disassemble that cylinder without letting the tumblers fall out. "
+            "The glove-box cylinder usually contains 8 of the 10 cuts needed for a master key; impression the remaining two ignition cuts, prep both sides of the key, or use progression for the remaining cuts. "
+            "The trunk lock can also be picked, impressioned, or disassembled without a working key. When removing the chrome face cap, drill a small centered hole through the stamping instead of forcing a screwdriver between the cap and plug body. "
+            "Reinstall the cap in a different position and make new stamps in the plug cap. Watch for ball-bearing detents and springs."
+        )
+    if method_number == "3" and "GLOVE BOX" in normalized_upper and ("IMPRESSION" in normalized_upper or "IGNITION" in normalized_upper):
         return (
             "Remove and disassemble the glove-box lock for cut positions 2, 4, 6, 8, and 10; "
             "then impression the door or ignition for the odd-spaced cut positions"
         )
-    if method_number == "2" and "HANDLE" in upper and ("CODE" in upper or "TUMBLERS" in upper):
+    if method_number == "2" and "HANDLE" in normalized_upper and ("CODE" in normalized_upper or "TUMBLERS" in normalized_upper):
         return (
             "Remove or pull out the handle/lock far enough to read the stamped code on the handle housing; "
             "if the code cannot be read, remove the handle/lock assembly and decode the tumblers"
         )
-    if method_number == "3" and "IMPRESSION" in upper and "LOCK" in upper:
+    if method_number == "3" and "IMPRESSION" in normalized_upper and "LOCK" in normalized_upper:
         return "Impression the locks"
-    if method_number == "4" and "IGNITION" in upper and "SPRING" in upper:
+    if method_number == "4" and "IGNITION" in normalized_upper and "SPRING" in normalized_upper:
         return (
             "If needed, remove the spring-retained ignition cylinder and either read the stamped code or "
             "disassemble it to make a working key; protect the turn-signal assembly while accessing the cylinder"
         )
-    if method_number == "5" and "DOOR LOCK" in upper and "MAKE" in upper:
+    if method_number == "5" and "DOOR LOCK" in normalized_upper and "MAKE" in normalized_upper:
         return "Disassemble the door lock to make the key"
     return text
 
