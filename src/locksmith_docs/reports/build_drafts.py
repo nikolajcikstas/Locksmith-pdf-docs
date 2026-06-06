@@ -298,6 +298,30 @@ def write_drafts(path: Path, drafts: list[dict[str, Any]]) -> None:
     path.write_text(json.dumps(drafts, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
+def merge_draft_lists(existing: list[dict[str, Any]], incoming: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Merge a targeted verification run back into the saved draft catalog."""
+    merged: dict[tuple[str, str, tuple[Any, ...]], dict[str, Any]] = {}
+    for item in existing + incoming:
+        if not isinstance(item, dict):
+            continue
+        key = (
+            str(item.get("system_code") or ""),
+            str(item.get("source_document") or ""),
+            tuple(item.get("source_pages") or []),
+        )
+        if not key[0]:
+            continue
+        merged[key] = item
+    return sorted(
+        merged.values(),
+        key=lambda item: (
+            str(item.get("source_document") or ""),
+            int((item.get("source_pages") or [0])[0] or 0),
+            str(item.get("system_code") or ""),
+        ),
+    )
+
+
 def import_to_database(drafts: list[dict[str, Any]], publish: bool = False, replace: bool = False) -> None:
     from locksmith_docs.db.repository import LocksmithRepository
 
@@ -381,6 +405,14 @@ def main() -> None:
         def progress(done: int, total: int, reused: int, new_requests: int) -> None:
             update_job(args.job_id, "running", f"Building reports: {done}/{total} checked, {reused} reused, {new_requests} new AI requests in this run.")
 
+    existing_drafts: list[dict[str, Any]] = []
+    if args.system_code and args.output.exists():
+        try:
+            existing_payload = json.loads(args.output.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            existing_payload = []
+        existing_drafts = existing_payload if isinstance(existing_payload, list) else []
+
     drafts = build_drafts(
         load_sections(args.input),
         args.min_confidence,
@@ -390,6 +422,8 @@ def main() -> None:
         progress,
         {args.system_code} if args.system_code else None,
     )
+    if args.system_code:
+        drafts = merge_draft_lists(existing_drafts, drafts)
     write_drafts(args.output, drafts)
     if args.to_db:
         import_to_database(drafts, publish=args.publish, replace=args.replace)

@@ -301,7 +301,7 @@ def rebuild_catalog(
     ]
     repo = LocksmithRepository()
     repo.retract_unpublishable_systems([code for code in withdrawn_codes if code])
-    import_report_drafts_to_database(report_drafts, publish=True, replace=True)
+    import_report_drafts_to_database(report_drafts, publish=True, replace=target_system_code is None)
 
     if regenerate_assets:
         if job_id:
