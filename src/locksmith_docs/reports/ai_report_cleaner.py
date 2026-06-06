@@ -86,6 +86,7 @@ QUALITY_PATTERNS = (
     re.compile(r"\b(?:ACJRA|SHE11|BE10W|ILC0|DTV|H[CO]NDA|TA[NH]GO)\b|:NFO\b", re.IGNORECASE),
     re.compile(r"\bFLlP\b"),
     re.compile(r"\b(?:NOCODESONANYLOCKS|USEA|DOORLOCK-TO|A=\s*TRACK|WW\s*2\s*TE)\b", re.IGNORECASE),
+    re.compile(r"\b(?:GERER|FOFO|TYEE|SO\s+A)\b", re.IGNORECASE),
     re.compile(r"^[\s@_|=-]{1,5}[A-Za-z]"),
     re.compile(r"(?:\s>\s.*){2,}"),
 )
@@ -1368,7 +1369,17 @@ def sanitize_structured_sections(draft: dict[str, Any]) -> dict[str, Any]:
                 making_key.pop(name, None)
         for name in ("methods", "field_notes", "service_notes"):
             if isinstance(making_key.get(name), list):
-                making_key[name] = [item for item in making_key[name] if isinstance(item, str)]
+                if name == "methods":
+                    methods = []
+                    for item in making_key[name]:
+                        if not isinstance(item, str):
+                            continue
+                        cleaned_method = clean_public_method_string(item)
+                        if cleaned_method and not report_quality_issues(cleaned_method):
+                            methods.append(cleaned_method)
+                    making_key[name] = list(dict.fromkeys(methods))
+                else:
+                    making_key[name] = [item for item in making_key[name] if isinstance(item, str)]
         if isinstance(making_key.get("field_workflow"), list):
             making_key["field_workflow"] = [item for item in making_key["field_workflow"] if isinstance(item, dict)]
     transponder = cleaned.get("transponder")
@@ -2053,7 +2064,7 @@ def extract_numbered_methods(source: str) -> list[str]:
             continue
         body = match.group(2).strip(" -=|")
         body = re.split(
-            r"\b(?:Main\s*Track|This\s+is\s+an\s+example|REMOTE\s*:|TRANSPONDER|PROGRAMMER|DECODERS?\s*:|CHIP\s+INFORMATION|FACTORY\s+TOOL)\b",
+            r"\b(?:Main\s*Track|This\s+is\s+an\s+example|REMOTE\s*:|TRANSPONDER|PROGRAMMER|DECODERS?\s*:|CHIP\s+INFORMATION|FACTORY\s+TOOL|AUTOSMART|MICHAEL\s+HYDE|AUDI-?\s*VW|PORSCHE)\b|©",
             body,
             maxsplit=1,
             flags=re.IGNORECASE,
@@ -2062,14 +2073,59 @@ def extract_numbered_methods(source: str) -> list[str]:
         body = " ".join(body.split()).strip(" .-=|")
         body = re.sub(r"\block\s+Reader/Decoder\b", "lock reader/decoder", body, flags=re.IGNORECASE)
         body = re.sub(r"\bdoorlock\b", "door lock", body, flags=re.IGNORECASE)
+        body = re.sub(r"\blocktomakekey\b", "lock to make a key", body, flags=re.IGNORECASE)
+        body = re.sub(r"\bstamped\s+onthem\b", "stamped on them", body, flags=re.IGNORECASE)
+        body = re.sub(r"and\.disassemble", "and disassemble", body, flags=re.IGNORECASE)
+        body = re.sub(r"\s*&\s*", " and ", body)
+        body = re.sub(r"[=|_<>\"{}]+", " ", body)
+        body = re.sub(r"\b(?:GERER+|Tyee|Bo|fofo\\w*)\b.*$", "", body, flags=re.IGNORECASE)
         body = re.sub(r"\bto[- ]determine\b", "to determine", body, flags=re.IGNORECASE)
         body = re.sub(r"^[^A-Za-z0-9]+", "", body)
         body = re.sub(r"\s+", " ", body).strip()
-        if len(body) < 20 or not is_clean_public_text(body):
+        body = clean_extracted_method_body(match.group(1), body)
+        if len(body) < 12 or not is_clean_public_text(body):
             continue
-        if re.search(r"\b(?:decode|reader|decoder|disassemble|cylinder|tumblers|wafers|door lock)\b", body, re.IGNORECASE):
+        if re.search(
+            r"\b(?:decode|reader|decoder|disassemble|cylinder|tumblers|wafers|door lock|owner'?s manual|key code|code stamped|impression)\b",
+            body,
+            re.IGNORECASE,
+        ):
             methods.append(f"Method {match.group(1)}: {body}.")
     return list(dict.fromkeys(methods))[:5]
+
+
+def clean_extracted_method_body(method_number: str, body: str) -> str:
+    """Turn OCR method fragments into clean field instructions without adding new facts."""
+    text = body.strip(" .,:;-")
+    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"\s*:\s*So\s+a$", "", text, flags=re.IGNORECASE)
+    text = re.sub(r",?\s*\d+$", "", text)
+    text = re.sub(r"\(\s*\d+\s+\d+\s*$", "", text)
+    text = re.sub(r"\bGERER[A-Z0-9 ]*$", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s+", " ", text).strip(" .,:;-")
+    upper = text.upper()
+    if method_number == "1" and "OWNER" in upper and "MANUAL" in upper:
+        return "Check the owner's manual for a dealer-written key code"
+    if method_number == "2" and "CODE STAMPED" in upper and "DOOR LOCK" in upper:
+        return "Check the door lock for a stamped key code"
+    if method_number == "3" and "GLOVE BOX" in upper and ("IMPRESSION" in upper or "IGNITION" in upper):
+        return (
+            "Remove and disassemble the glove-box lock for cut positions 2, 4, 6, 8, and 10; "
+            "then impression the door or ignition for the odd-spaced cut positions"
+        )
+    if method_number == "5" and "DOOR LOCK" in upper and "MAKE" in upper:
+        return "Disassemble the door lock to make the key"
+    return text
+
+
+def clean_public_method_string(method: str) -> str:
+    match = re.match(r"\s*Method\s*#?\s*(\d+)\s*:\s*(.+)", method, re.IGNORECASE)
+    if not match:
+        return method.strip()
+    body = clean_extracted_method_body(match.group(1), match.group(2))
+    if not body:
+        return ""
+    return f"Method {match.group(1)}: {body.rstrip('.')}."
 
 
 def source_remote_option_count(source_text: str) -> int:
