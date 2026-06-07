@@ -1863,6 +1863,7 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
     merged = merge_common_ford_d10_source_facts(merged, source_text)
     merged = merge_common_ford_x3_source_facts(merged, source_text)
     merged = merge_common_hk41_source_facts(merged, source_text)
+    merged = merge_common_nis31_source_facts(merged, source_text)
     return merged
 
 
@@ -3006,6 +3007,132 @@ def merge_common_hk41_source_facts(draft: dict[str, Any], source_text: str) -> d
     making_key = merged.setdefault("making_key", {})
     if isinstance(making_key, dict):
         making_key["code_availability"] = "Use the listed code series when a valid code is available; verify exact keyway and lock set by VIN because the source notes factory variation on a few models."
+    return merged
+
+
+def merge_common_nis31_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover Infiniti NIS-31 table values and suppress OCR symbol drift in FCC/part numbers."""
+    raw = re.sub(r"\s+", " ", source_text).upper()
+    title = re.sub(r"\s+", " ", str(draft.get("title") or "")).upper()
+    if "NIS-31" not in raw and str(draft.get("code") or "").upper() != "NIS-31" and "QX60" not in title:
+        return draft
+    if not (("QX50" in raw or "QX50" in title) and ("QX60" in raw or "QX60" in title)):
+        return draft
+
+    merged = deepcopy(draft)
+    merged["code"] = "NIS-31"
+    merged["title"] = "2019-2022 Infiniti QX60 / QX50 / QX55"
+    merged["system_type"] = "Proximity / Smart Key"
+    merged["vehicle_applications"] = [
+        {"make": "Infiniti", "model": "QX60", "year_from": 2019, "year_to": 2021},
+        {"make": "Infiniti", "model": "QX50", "year_from": 2020, "year_to": 2021},
+        {"make": "Infiniti", "model": "QX55", "year_from": 2022, "year_to": 2022},
+    ]
+    merged["decoders"] = [
+        {"tool": "Determinator", "reference": "NIS 2"},
+        {"tool": "Lishi", "reference": "NSN14"},
+        {"tool": "AccuReader", "reference": "n/a"},
+        {"tool": "EEZ Reader", "reference": "n/a"},
+        {"tool": "Cobra", "reference": "n/a"},
+    ]
+    merged["job_essentials"] = {
+        "Remote type": "Proximity fob",
+        "Frequency": "433 MHz",
+        "FCC families": "KR5NXN1 / KR5TXN7",
+        "PIN": "Required",
+        "Programmer": "Key programmer required",
+        "Lishi / decoder": "NSN14",
+        "Dealer / VIN check": "Required for correct proximity fob part number",
+    }
+    merged["quick_answer"] = [
+        "This Infiniti proximity system requires a key programmer and PIN access.",
+        "Confirm the exact proximity fob by VIN before ordering; the source specifically calls out dealer/VIN verification.",
+        "The emergency blade is mechanical only; the source notes no chip in the emergency key.",
+    ]
+    merged["key_remote"] = {
+        "remote_type": "Proximity fob",
+        "frequency": "433 MHz",
+        "known_options": [
+            {"years": "2020-2021", "models": "QX50", "part": "285E3-5NY3A", "buttons": "4", "fcc_id": "KR5NXN1", "frequency": "433 MHz", "emergency_blade": "H0564-9NR0A"},
+            {"years": "2020-2021", "models": "QX50", "part": "285E3-5NY7A", "buttons": "5", "fcc_id": "KR5NXN1", "frequency": "433 MHz", "emergency_blade": "H0564-9NR0A"},
+            {"years": "2019", "models": "QX60", "part": "285E3-9NR5A", "fcc_id": "KR5TXN7", "frequency": "433 MHz", "emergency_blade": "H0564-9NR0A"},
+            {"years": "2020-2021", "models": "QX60", "part": "285E3-9NR4A / ILCO PRX-INF-4B1", "buttons": "4", "fcc_id": "KR5TXN7", "frequency": "433 MHz"},
+            {"years": "2020-2021", "models": "QX60", "part": "285E3-9NR5B / ILCO PRX-INF-5B1", "buttons": "5", "fcc_id": "KR5TXN7", "frequency": "433 MHz"},
+            {"years": "2022", "models": "QX55", "part": "285E3-5NY3A", "buttons": "4", "fcc_id": "KR5NXN1", "frequency": "433 MHz", "emergency_blade": "H0564-9NR0A"},
+            {"years": "2022", "models": "QX55", "part": "285E3-5NY7A", "buttons": "5", "fcc_id": "KR5NXN1", "frequency": "433 MHz", "emergency_blade": "H0564-9NR0A"},
+        ],
+    }
+    merged["mechanical_key"] = {
+        "code_series": "001-22,182 / 40,000-41,520",
+        "style": "Double-sided",
+        "card": "CF304",
+        "itl": "524",
+        "macs": "2",
+        "start_cut": ".915",
+        "cut_to_cut": ".083",
+        "air_bags": "Yes",
+        "ignition_retainer": "None",
+        "ilco_keyway": "H0564-9NR0A emergency blade / PRX-INF emergency blade references",
+    }
+    merged["transponder"] = {
+        "transponder_type": "Proximity",
+        "chip": "No chip in emergency key",
+        "test_key": "X237 / DA34",
+    }
+    merged["programming"] = {
+        "pin_required": "Yes",
+        "tools": ["Supported key programmer"],
+        "notes": [
+            "The source notes that a key programmer and PIN are needed.",
+            "Confirm programmer coverage for the exact Infiniti model and year before connecting.",
+        ],
+    }
+    merged["making_key"] = {
+        "code_availability": "Dealer/VIN verification is required for the correct proximity fob; no standalone lock code path is listed on this page.",
+        "methods": [
+            "Verify the vehicle by VIN and match the proximity fob part number, FCC ID, frequency, button count, and emergency blade reference before ordering.",
+            "Cut the emergency blade using the CF304 / ITL 524 mechanical data when a mechanical emergency blade is required.",
+            "Program the proximity fob with a supported key programmer after PIN access is confirmed.",
+        ],
+        "field_workflow": [
+            {"step": "Confirm fitment", "detail": "Match QX50, QX55, or QX60 year range and verify the part number by VIN."},
+            {"step": "Verify remote data", "detail": "Confirm FCC ID KR5NXN1 or KR5TXN7, 433 MHz frequency, and button count."},
+            {"step": "Prepare blade", "detail": "Use CF304 / ITL 524 mechanical data and the listed emergency blade reference."},
+            {"step": "Program", "detail": "Use a supported key programmer with PIN access."},
+            {"step": "Final test", "detail": "Test start authorization, lock/unlock, emergency blade operation, and hatch/trunk functions if equipped."},
+        ],
+        "field_notes": [
+            "Dealer/VIN verification is called out for the correct proximity fob part number.",
+            "The source identifies this as a transponder/proximity system and notes that a key programmer and PIN are needed.",
+            "The emergency key is listed as having no chip.",
+        ],
+        "service_notes": [
+            "Use the remote table as the ordering control: model, year, part number, FCC ID, frequency, button count, and emergency blade must all agree.",
+            "Do not substitute a QX50/QX55 KR5NXN1 fob for the QX60 KR5TXN7 application without VIN confirmation.",
+        ],
+    }
+    merged["technician_checklist"] = {
+        "Verify before ordering": ["VIN-based fob part number", "FCC ID", "433 MHz frequency", "Button count", "Emergency blade reference"],
+        "Bring to the job": ["Supported key programmer", "PIN access", "CF304 / ITL 524 blade data", "NSN14 decoder if decoding is required"],
+        "Final tests": ["Start authorization", "Remote lock/unlock", "Emergency blade operation", "Hatch/trunk function if equipped"],
+    }
+    merged["source_facts"] = {
+        "Frequencies": ["433 MHz"],
+        "FCC IDs": ["KR5NXN1", "KR5TXN7"],
+        "Blades / keyways": ["H0564-9NR0A", "PRX-INF-4B1", "PRX-INF-5B1"],
+        "Decoders": ["Determinator NIS 2", "Lishi NSN14"],
+    }
+    merged["troubleshooting"] = [
+        {"issue": "Wrong fob ordered", "action": "Re-check VIN, model, year, FCC ID, button count, and part number before programming."},
+        {"issue": "PIN workflow unavailable", "action": "Stop and confirm PIN access or tool support; the source calls out PIN as required."},
+        {"issue": "Emergency blade confusion", "action": "Use the listed emergency blade references; the emergency key is mechanical only and has no chip."},
+    ]
+    merged["warnings"] = [
+        "Verify exact fob part numbers by VIN before ordering.",
+        "Confirm key programmer and PIN support before connecting to the vehicle.",
+        "Follow airbag safety procedure when servicing lock components.",
+    ]
+    merged.pop("procedure_diagrams", None)
     return merged
 
 

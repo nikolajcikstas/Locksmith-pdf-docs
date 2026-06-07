@@ -3405,5 +3405,238 @@
         }
       ]
     }
+  },
+  {
+    "system_code": "NIS-31",
+    "source_document": "2021 AutoSmart ASIAN Book.pdf",
+    "source_pages": [
+      362,
+      362
+    ],
+    "confidence": 0.6,
+    "ai_verified": true,
+    "publication_issues": [],
+    "draft": {
+      "code": "NIS-31",
+      "title": "2019-2022 Infiniti QX60 / QX50 / QX55",
+      "decoders": [
+        {
+          "tool": "Determinator",
+          "reference": "NIS 2"
+        },
+        {
+          "tool": "Lishi",
+          "reference": "NSN14"
+        }
+      ],
+      "warnings": [
+        "Verify exact fob part numbers by VIN before ordering.",
+        "Confirm key programmer and PIN support before connecting to the vehicle.",
+        "Follow airbag safety procedure when servicing lock components."
+      ],
+      "key_remote": {
+        "frequency": "433 MHz",
+        "remote_type": "Proximity fob",
+        "known_options": [
+          {
+            "part": "285E3-5NY3A",
+            "years": "2020-2021",
+            "fcc_id": "KR5NXN1",
+            "models": "QX50",
+            "buttons": "4",
+            "frequency": "433 MHz",
+            "emergency_blade": "H0564-9NR0A"
+          },
+          {
+            "part": "285E3-5NY7A",
+            "years": "2020-2021",
+            "fcc_id": "KR5NXN1",
+            "models": "QX50",
+            "buttons": "5",
+            "frequency": "433 MHz",
+            "emergency_blade": "H0564-9NR0A"
+          },
+          {
+            "part": "285E3-9NR5A",
+            "years": "2019",
+            "fcc_id": "KR5TXN7",
+            "models": "QX60",
+            "frequency": "433 MHz",
+            "emergency_blade": "H0564-9NR0A"
+          },
+          {
+            "part": "285E3-9NR4A / ILCO PRX-INF-4B1",
+            "years": "2020-2021",
+            "fcc_id": "KR5TXN7",
+            "models": "QX60",
+            "buttons": "4",
+            "frequency": "433 MHz"
+          },
+          {
+            "part": "285E3-9NR5B / ILCO PRX-INF-5B1",
+            "years": "2020-2021",
+            "fcc_id": "KR5TXN7",
+            "models": "QX60",
+            "buttons": "5",
+            "frequency": "433 MHz"
+          }
+        ]
+      },
+      "making_key": {
+        "methods": [
+          "Verify the vehicle by VIN and match the proximity fob part number, FCC ID, frequency, button count, and emergency blade reference before ordering.",
+          "Cut the emergency blade using the CF304 / ITL 524 mechanical data when a mechanical emergency blade is required.",
+          "Program the proximity fob with a supported key programmer after PIN access is confirmed."
+        ],
+        "field_notes": [
+          "Dealer/VIN verification is called out for the correct proximity fob part number.",
+          "The source identifies this as a transponder/proximity system and notes that a key programmer and PIN are needed.",
+          "The emergency key is listed as having no chip."
+        ],
+        "service_notes": [
+          "Use the remote table as the ordering control: model, year, part number, FCC ID, frequency, button count, and emergency blade must all agree.",
+          "Do not substitute a QX50/QX55 KR5NXN1 fob for the QX60 KR5TXN7 application without VIN confirmation."
+        ],
+        "field_workflow": [
+          {
+            "step": "Confirm fitment",
+            "detail": "Match QX50, QX55, or QX60 year range and verify the part number by VIN."
+          },
+          {
+            "step": "Verify remote data",
+            "detail": "Confirm FCC ID KR5NXN1 or KR5TXN7, 433 MHz frequency, and button count."
+          },
+          {
+            "step": "Prepare blade",
+            "detail": "Use CF304 / ITL 524 mechanical data and the listed emergency blade reference."
+          },
+          {
+            "step": "Program",
+            "detail": "Use a supported key programmer with PIN access."
+          },
+          {
+            "step": "Final test",
+            "detail": "Test start authorization, lock/unlock, emergency blade operation, and hatch/trunk functions if equipped."
+          }
+        ],
+        "code_availability": "Dealer/VIN verification is required for the correct proximity fob; no standalone lock code path is listed on this page."
+      },
+      "programming": {
+        "notes": [
+          "The source notes that a key programmer and PIN are needed.",
+          "Confirm programmer coverage for the exact Infiniti model and year before connecting."
+        ],
+        "tools": [],
+        "pin_required": "Yes"
+      },
+      "system_type": "Proximity / Smart Key",
+      "transponder": {
+        "chip": "No chip in emergency key",
+        "test_key": "X237 / DA34",
+        "transponder_type": "Proximity"
+      },
+      "quick_answer": [
+        "This Infiniti proximity system requires a key programmer and PIN access.",
+        "Confirm the exact proximity fob by VIN before ordering; the source specifically calls out dealer/VIN verification.",
+        "The emergency blade is mechanical only; the source notes no chip in the emergency key."
+      ],
+      "source_facts": {
+        "FCC IDs": [
+          "KR5NXN1",
+          "KR5TXN7"
+        ],
+        "Decoders": [
+          "Determinator NIS 2",
+          "Lishi NSN14"
+        ],
+        "Frequencies": [
+          "433 MHz"
+        ],
+        "Blades / keyways": [
+          "H0564-9NR0A",
+          "PRX-INF-4B1",
+          "PRX-INF-5B1"
+        ]
+      },
+      "job_essentials": {
+        "PIN": "Required",
+        "Frequency": "433 MHz",
+        "Programmer": "Key programmer required",
+        "Remote type": "Proximity fob",
+        "FCC families": "KR5NXN1 / KR5TXN7",
+        "Lishi / decoder": "NSN14",
+        "Dealer / VIN check": "Required for correct proximity fob part number"
+      },
+      "mechanical_key": {
+        "itl": "524",
+        "card": "CF304",
+        "macs": "2",
+        "style": "Double-sided",
+        "air_bags": "Yes",
+        "start_cut": ".915",
+        "cut_to_cut": ".083",
+        "code_series": "001-22,182 / 40,000-41,520",
+        "ilco_keyway": "H0564-9NR0A emergency blade / PRX-INF emergency blade references",
+        "ignition_retainer": "None"
+      },
+      "source_coverage": [
+        "Source coverage: pages 362-362."
+      ],
+      "troubleshooting": [
+        {
+          "issue": "Wrong fob ordered",
+          "action": "Re-check VIN, model, year, FCC ID, button count, and part number before programming."
+        },
+        {
+          "issue": "PIN workflow unavailable",
+          "action": "Stop and confirm PIN access or tool support; the source calls out PIN as required."
+        },
+        {
+          "issue": "Emergency blade confusion",
+          "action": "Use the listed emergency blade references; the emergency key is mechanical only and has no chip."
+        }
+      ],
+      "technician_checklist": {
+        "Final tests": [
+          "Start authorization",
+          "Remote lock/unlock",
+          "Emergency blade operation",
+          "Hatch/trunk function if equipped"
+        ],
+        "Bring to the job": [
+          "Supported key programmer",
+          "PIN access",
+          "CF304 / ITL 524 blade data",
+          "NSN14 decoder if decoding is required"
+        ],
+        "Verify before ordering": [
+          "VIN-based fob part number",
+          "FCC ID",
+          "433 MHz frequency",
+          "Button count",
+          "Emergency blade reference"
+        ]
+      },
+      "vehicle_applications": [
+        {
+          "make": "Infiniti",
+          "model": "QX60",
+          "year_to": 2021,
+          "year_from": 2019
+        },
+        {
+          "make": "Infiniti",
+          "model": "QX50",
+          "year_to": 2021,
+          "year_from": 2020
+        },
+        {
+          "make": "Infiniti",
+          "model": "QX55",
+          "year_to": 2022,
+          "year_from": 2022
+        }
+      ]
+    }
   }
 ]
