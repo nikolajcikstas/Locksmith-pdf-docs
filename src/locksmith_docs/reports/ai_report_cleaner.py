@@ -1746,6 +1746,7 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
         ):
             mechanical.pop("ignition_retainer", None)
     merged = merge_common_gm_proximity_source_facts(merged, source_text)
+    merged = merge_common_av10_source_facts(merged, source_text)
     merged = merge_common_vw_av4_source_facts(merged, source_text)
     merged = merge_common_bmw2_source_facts(merged, source_text)
     merged = merge_common_dge20_source_facts(merged, source_text)
@@ -1847,6 +1848,148 @@ def merge_common_gm_proximity_source_facts(draft: dict[str, Any], source_text: s
             {"years": "", "models": "XT4 / XT5", "part": "GM 13510245 / ILCO PRX-CAD-5B4", "fcc_id": "HYQ2EB", "frequency": "433 MHz", "buttons": "5 or 6", "notes": "Verify exact model/year by VIN."},
             {"years": "", "models": "XTS", "part": "GM 13510254 / ILCO PRX-CAD-5B3", "fcc_id": "HYQ2AB", "frequency": "315 MHz", "buttons": "5", "notes": "Verify exact model/year by VIN."},
         ]
+    return merged
+
+
+def merge_common_av10_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover Audi AV-10 proximity data when the OCR grid is sparse."""
+    if str(draft.get("code") or "").upper() != "AV-10":
+        return draft
+    source = re.sub(r"\s+", " ", source_text.upper())
+    if not ("AV-10" in source and "IYZ" in source and "PIN" in source and ("HU162" in source or "HUI62" in source)):
+        return draft
+    merged = deepcopy(draft)
+    merged["title"] = "2017-2021 Audi A4 / A5 / A6 / A7 / A8 / Q5 / Q7 / Q8 / TT"
+    merged["system_type"] = "Proximity / Smart Key"
+    merged["vehicle_applications"] = [
+        {"make": "Audi", "model": "A4 / S4", "year_from": 2017, "year_to": 2021},
+        {"make": "Audi", "model": "A5", "year_from": 2018, "year_to": 2021},
+        {"make": "Audi", "model": "A6 / S6", "year_from": 2019, "year_to": 2021},
+        {"make": "Audi", "model": "A7", "year_from": 2019, "year_to": 2021},
+        {"make": "Audi", "model": "A8 / S8", "year_from": 2019, "year_to": 2021},
+        {"make": "Audi", "model": "Q5", "year_from": 2018, "year_to": 2021},
+        {"make": "Audi", "model": "Q7", "year_from": 2017, "year_to": 2021},
+        {"make": "Audi", "model": "Q8", "year_from": 2019, "year_to": 2021},
+        {"make": "Audi", "model": "TT", "year_from": 2016, "year_to": 2021},
+    ]
+    merged["quick_answer"] = [
+        "This Audi AV-10 group uses a proximity system and requires a specialized key programmer or EEPROM-capable workflow.",
+        "A PIN is required, but the source notes that the dealer does not provide PIN access. Some aftermarket tools may read the PIN, but success is not guaranteed.",
+        "Verify the exact remote part number and emergency blade by VIN before ordering.",
+    ]
+    remote = merged.setdefault("key_remote", {})
+    if isinstance(remote, dict):
+        remote.update({
+            "remote_type": "Proximity fob",
+            "frequency": "433 MHz",
+            "known_options": [
+                {
+                    "years": "2017-21",
+                    "models": "A4 / S4",
+                    "part": "4M0 959 754 AK",
+                    "fcc_id": "IYZ-AK01",
+                    "frequency": "433 MHz",
+                    "emergency_blade": "4M0 837 216 A",
+                },
+                {
+                    "years": "2019-21",
+                    "models": "A6 / S6",
+                    "part": "4N0 959 754 K",
+                    "fcc_id": "IYZ-AK01",
+                    "frequency": "433 MHz",
+                    "emergency_blade": "4N0 837 216",
+                },
+                {
+                    "years": "2019-21",
+                    "models": "A8 / S8",
+                    "part": "4N0 959 754 K",
+                    "fcc_id": "IYZ-AK01",
+                    "frequency": "433 MHz",
+                    "emergency_blade": "4N0 837 216",
+                },
+                {
+                    "years": "2019-21",
+                    "models": "Q8",
+                    "part": "4N0 959 754 K",
+                    "fcc_id": "IYZ-AK01",
+                    "frequency": "433 MHz",
+                    "emergency_blade": "4N0 837 216",
+                },
+                {
+                    "years": "2016-21",
+                    "models": "TT",
+                    "part": "8S0 959 754 AL",
+                    "fcc_id": "IYZ-AK01",
+                    "frequency": "433 MHz",
+                    "emergency_blade": "4M0 837 216 A",
+                },
+            ],
+        })
+    mechanical = merged.setdefault("mechanical_key", {})
+    if isinstance(mechanical, dict):
+        mechanical.update({
+            "code_series": "Unknown / dealer or tool lookup required",
+            "style": "Internal-milled Audi/VW Type 1/2/3 family; verify exact keyway by VIN",
+            "card": "HU162 family",
+            "itl_number": "9",
+            "ilco_keyway": "HU162 family / emergency blade by VIN",
+            "macs": "8",
+            "start_cut": "n/a",
+            "cut_to_cut": ".201",
+            "air_bags": "Yes",
+            "ignition_retainer": "n/a",
+            "cutting_setup": {
+                "type_1": "8 internal center cuts with a corresponding edge cut.",
+                "type_2": "9 internal center cuts with 3 corresponding edge cuts.",
+                "type_3": "10 internal center cuts with 4 corresponding edge cuts.",
+                "edge_track": "The source calls out an edge-track example and notes that the keyway appears on proximity vehicles in this group.",
+            },
+        })
+    transponder = merged.setdefault("transponder", {})
+    if isinstance(transponder, dict):
+        transponder.update({
+            "transponder_type": "Standard proximity transponder",
+            "chip": "Integrated circuit",
+            "reusable": "No",
+            "cloning": "No cloning for this proximity system.",
+        })
+    programming = merged.setdefault("programming", {})
+    if isinstance(programming, dict):
+        programming.update({
+            "pin_required": "Yes",
+            "pin_guidance": "PIN is required. The source states that the dealer does not have PIN access; aftermarket programmers may be able to read it, but this is not always possible.",
+            "factory_tool": "Factory/subscription tool path listed; specialized key programmer or EEPROM equipment may be required.",
+            "tool_guidance": "Check support with the programmer supplier before starting. Some tools work well on this group and some do not.",
+            "tools": [
+                {"name": "TCODE / MVP Pro", "status": "Check support"},
+                {"name": "TDB1000", "status": "Check support"},
+                {"name": "Hotwire", "status": "Check support"},
+                {"name": "Smart Pro", "status": "Check support"},
+                {"name": "AutoProPad", "status": "Check support"},
+                {"name": "Autel IM608", "status": "Check support"},
+            ],
+        })
+    making_key = merged.setdefault("making_key", {})
+    if isinstance(making_key, dict):
+        making_key["code_availability"] = "No codes are listed on any locks."
+        making_key["methods"] = [
+            "Method 1: Use a lock reader/decoder in the door lock to determine the cuts for a complete key.",
+            "Method 2: Remove and disassemble the door cylinder, then decode the tumblers when in-place decoding is not practical.",
+            "Use the exact emergency blade and keyway confirmed by VIN before cutting; this group has multiple Audi/VW internal-milled keyway variations.",
+        ]
+    merged["decoders"] = [
+        {"tool": "Determinator", "reference": "n/a"},
+        {"tool": "Lishi", "reference": "HU162"},
+        {"tool": "AccuReader", "reference": "n/a"},
+        {"tool": "EEZ Reader", "reference": "n/a"},
+    ]
+    warnings = [
+        *(merged.get("warnings") if isinstance(merged.get("warnings"), list) else []),
+        "Verify part number, emergency blade, FCC ID, and frequency by VIN before ordering.",
+        "PIN access is not dealer-supplied in the source notes; confirm programmer capability before connecting.",
+        "No cloning is listed for this proximity system.",
+    ]
+    merged["warnings"] = list(dict.fromkeys(str(item).strip() for item in warnings if str(item).strip()))
     return merged
 
 
