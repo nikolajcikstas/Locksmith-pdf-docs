@@ -9,6 +9,13 @@ from locksmith_docs.core.config import get_settings
 from locksmith_docs.db.connection import get_connection
 
 
+def write_json_atomic(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    tmp_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    tmp_path.replace(path)
+
+
 def bundled_report_seed_path() -> Path:
     return get_settings().project_root / "seed" / "report_drafts.json"
 
@@ -64,7 +71,6 @@ def ensure_bundled_report_seed() -> bool:
             changed = True
     if not changed:
         return False
-    destination.parent.mkdir(parents=True, exist_ok=True)
     payload = sorted(
         merged.values(),
         key=lambda item: (
@@ -73,7 +79,7 @@ def ensure_bundled_report_seed() -> bool:
             str(item.get("system_code") or ""),
         ),
     )
-    destination.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    write_json_atomic(destination, payload)
     return True
 
 
@@ -146,5 +152,5 @@ def export_published_report_seed(path: Path | None = None) -> Path:
             "draft": row["draft"] or {},
         }
     payload = [retained[code] for code in sorted(retained)]
-    destination.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    write_json_atomic(destination, payload)
     return destination

@@ -1749,6 +1749,10 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
     merged = merge_common_vw_av4_source_facts(merged, source_text)
     merged = merge_common_bmw2_source_facts(merged, source_text)
     merged = merge_common_dge20_source_facts(merged, source_text)
+    merged = merge_common_ford_c34_source_facts(merged, source_text)
+    merged = merge_common_ford_d10_source_facts(merged, source_text)
+    merged = merge_common_ford_x3_source_facts(merged, source_text)
+    merged = merge_common_hk41_source_facts(merged, source_text)
     return merged
 
 
@@ -2034,6 +2038,315 @@ def merge_common_dge20_source_facts(draft: dict[str, Any], source_text: str) -> 
     return merged
 
 
+def _position_row(label: str, positions: set[int], column_count: int) -> list[str]:
+    return [label] + ["filled" if position in positions else "" for position in range(1, column_count + 1)]
+
+
+def _lock_position_diagram(
+    title: str,
+    caption: str,
+    column_count: int,
+    rows: list[list[str]],
+    note: str,
+    placement: str = "making_key",
+) -> dict[str, Any]:
+    return {
+        "title": title,
+        "placement": placement,
+        "caption": caption,
+        "panels": [{
+            "label": "Lock positions",
+            "columns": [str(position) for position in range(1, column_count + 1)],
+            "rows": rows,
+            "note": note,
+        }],
+    }
+
+
+def merge_common_ford_c34_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover Ford C34 Interceptor data when the OCR table is split across rows."""
+    if str(draft.get("code") or "").upper() != "FORD-C34":
+        return draft
+    source = re.sub(r"\s+", " ", source_text.upper())
+    if not ("INTERCEPTOR" in source and "CWT" in source and "FO38" in source and "01-1706X" in source):
+        return draft
+    merged = deepcopy(draft)
+    merged["title"] = "2013-2021 Ford Explorer Interceptor SUV / 2013-2019 Ford Taurus Interceptor Sedan"
+    merged["system_type"] = "Mechanical key / remote fob reference"
+    merged["vehicle_applications"] = [
+        {"make": "Ford", "model": "Explorer Interceptor SUV", "year_from": 2013, "year_to": 2021},
+        {"make": "Ford", "model": "Taurus Interceptor Sedan", "year_from": 2013, "year_to": 2019},
+    ]
+    remote = merged.setdefault("key_remote", {})
+    if isinstance(remote, dict):
+        remote.update({
+            "remote_type": "Remote fob when equipped",
+            "frequency": "315 MHz",
+            "known_options": [{
+                "years": "2013-21 / 2013-19",
+                "models": "Explorer Interceptor SUV / Taurus Interceptor Sedan",
+                "part": "Verify by VIN",
+                "fcc_id": "CWTWB1U331",
+                "frequency": "315 MHz",
+                "buttons": "",
+                "notes": "IC 1788A-FWBIU345; ALPS manufacturer listing.",
+            }],
+        })
+    mechanical = merged.setdefault("mechanical_key", {})
+    if isinstance(mechanical, dict):
+        mechanical.update({
+            "code_series": "01-1706X",
+            "style": "Double-sided",
+            "card": "H75",
+            "itl_number": "n/a",
+            "ilco_keyway": "H75",
+            "macs": "2",
+            "start_cut": ".405",
+            "cut_to_cut": ".092",
+            "air_bags": "Yes",
+            "ignition_retainer": "n/a",
+            "spacing": {
+                "1": ".967", "2": ".873", "3": ".779", "4": ".685",
+                "5": ".591", "6": ".497", "7": ".403", "8": ".309",
+            },
+            "depths": {"1": ".354", "2": ".329", "3": ".304", "4": ".279", "5": ".254"},
+            "cutting_setup": {
+                "framon": "Lay the tip-stop clip flat against the left side of the vise and set the first cut at .405.",
+                "hpc": "H75",
+                "pak_a_punch": "n/a",
+            },
+        })
+    transponder = merged.setdefault("transponder", {})
+    if isinstance(transponder, dict):
+        transponder.update({"transponder_type": "None", "chip": "No transponder", "reusable": "n/a"})
+    programming = merged.setdefault("programming", {})
+    if isinstance(programming, dict):
+        programming.update({
+            "pin_required": "n/a",
+            "factory_tool": "n/a",
+            "tool_guidance": "This section is a mechanical remote-fob reference; no transponder programming process is listed on the source page.",
+        })
+        programming["tools"] = []
+    making_key = merged.setdefault("making_key", {})
+    if isinstance(making_key, dict):
+        making_key["code_availability"] = "No codes are listed on any locks."
+        making_key["methods"] = [
+            "Method 1: Use a Lock Decoder/Reader in the door lock to identify positions 3 through 8, then progress the remaining ignition cut for non-proximity models.",
+            "Method 2: Disassemble the door lock to read the wafer positions, then progress any remaining ignition cut needed for a complete key.",
+        ]
+    merged["decoders"] = [
+        {"tool": "Determinator", "reference": "FOR 2"},
+        {"tool": "Lishi", "reference": "FO38"},
+        {"tool": "AccuReader", "reference": "FORD 8"},
+        {"tool": "EEZ Reader", "reference": "H75"},
+        {"tool": "Cobra", "reference": "KDFS"},
+    ]
+    merged["lock_parts"] = [
+        {
+            "years": "2013-21",
+            "models": "Explorer Interceptor SUV",
+            "ignition_lock": "7028135 service lock listing",
+            "door_lock": "708556 / 708616 service lock listings",
+            "trunk_lock": "n/a",
+            "pin_kit": "7012364",
+        },
+        {
+            "years": "2013-19",
+            "models": "Taurus Interceptor Sedan",
+            "ignition_lock": "7028135 service lock listing",
+            "door_lock": "708556 / 708616 service lock listings",
+            "trunk_lock": "n/a",
+            "pin_kit": "7012364",
+        },
+    ]
+    merged["procedure_diagrams"] = [_lock_position_diagram(
+        "H75 lock-position guide",
+        "Original redrawn lock-position map for Ford Interceptor mechanical decoding.",
+        8,
+        [
+            _position_row("Ignition", {1, 2, 3, 4, 5, 6, 7, 8}, 8),
+            _position_row("Door", {3, 4, 5, 6, 7, 8}, 8),
+            _position_row("Trunk / hatch", {3, 4, 5, 6, 7, 8}, 8),
+            _position_row("Glove box", {4, 5, 6}, 8),
+        ],
+        "Door decoding identifies positions 3-8; progress the remaining ignition cut when required.",
+    )]
+    return merged
+
+
+def merge_common_ford_d10_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover the 1965-66 Mustang Ford-D10 page, including its 5-cut lock map."""
+    if str(draft.get("code") or "").upper() != "FORD-D10":
+        return draft
+    source = re.sub(r"\s+", " ", source_text.upper())
+    if not ("MUSTANG" in source and "TRY-OUT" in source and "H54" in source and "FZ000-999" in source):
+        return draft
+    merged = deepcopy(draft)
+    merged["title"] = "1965-1966 Ford Mustang"
+    merged["system_type"] = "Mechanical key"
+    merged["vehicle_applications"] = [
+        {"make": "Ford", "model": "Mustang", "year_from": 1965, "year_to": 1966},
+    ]
+    remote = merged.setdefault("key_remote", {})
+    if isinstance(remote, dict):
+        remote.update({"remote_type": "None", "frequency": "n/a", "known_options": []})
+    mechanical = merged.setdefault("mechanical_key", {})
+    if isinstance(mechanical, dict):
+        mechanical.update({
+            "code_series": "FE, FL, FN, FZ000-999",
+            "style": "Single-sided",
+            "card": "H54",
+            "itl_number": "n/a",
+            "ilco_keyway": "H54",
+            "macs": "2",
+            "start_cut": "n/a",
+            "cut_to_cut": ".100",
+            "air_bags": "No",
+            "ignition_retainer": "n/a",
+            "spacing": {"1": ".199", "2": ".299", "3": ".399", "4": ".499", "5": ".599"},
+            "depths": {"1": ".240", "2": ".220", "3": ".200", "4": ".180", "5": ".160"},
+            "cutting_setup": {"curtis_clipper": "FORD / FORD", "pak_a_punch": "n/a"},
+        })
+    transponder = merged.setdefault("transponder", {})
+    if isinstance(transponder, dict):
+        transponder.update({"transponder_type": "None", "chip": "No transponder", "reusable": "n/a"})
+    making_key = merged.setdefault("making_key", {})
+    if isinstance(making_key, dict):
+        making_key["code_availability"] = "No codes are listed on any locks."
+        making_key["methods"] = [
+            "Method 1: Use a tryout-key set for all locks; the source notes that this works well on this vehicle.",
+            "Method 2: Impression the locks, taking extra care because the cylinders are old and may be worn.",
+            "Method 3: Remove and disassemble the door cylinder to decode the tumblers; the resulting key should also operate the ignition. Remove and decode the trunk cylinder when glove-box coverage is needed.",
+        ]
+    merged["decoders"] = [
+        {"tool": "Determinator", "reference": "n/a"},
+        {"tool": "Lishi", "reference": "n/a"},
+        {"tool": "AccuReader", "reference": "n/a"},
+        {"tool": "EEZ Reader", "reference": "H54"},
+        {"tool": "Cobra", "reference": "n/a"},
+    ]
+    merged["procedure_diagrams"] = [_lock_position_diagram(
+        "H54 lock-position guide",
+        "Original redrawn 5-position lock map for 1965-66 Ford Mustang.",
+        5,
+        [
+            _position_row("Ignition", {1, 2, 3, 4, 5}, 5),
+            _position_row("Doors", {1, 2, 3, 4, 5}, 5),
+            _position_row("Trunk", {1, 2, 3, 4, 5}, 5),
+            _position_row("Glove box", {1, 2, 3, 4, 5}, 5),
+        ],
+        "All listed lock groups use the 5-cut key path on this early Mustang reference.",
+    )]
+    return merged
+
+
+def merge_common_ford_x3_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover Ford-X3 Capri/Fiesta facts that OCR frequently corrupts."""
+    if str(draft.get("code") or "").upper() != "FORD-X3":
+        return draft
+    source = re.sub(r"\s+", " ", source_text.upper())
+    if not ("CAPRI" in source and "FIESTA" in source and "DOUBLE CUTS" in source):
+        return draft
+    merged = deepcopy(draft)
+    merged["title"] = "1975-1978 Mercury Capri / 1979-1980 Ford Fiesta"
+    merged["system_type"] = "Mechanical key"
+    merged["vehicle_applications"] = [
+        {"make": "Mercury", "model": "Capri", "year_from": 1975, "year_to": 1978},
+        {"make": "Ford", "model": "Fiesta", "year_from": 1979, "year_to": 1980},
+    ]
+    mechanical = merged.setdefault("mechanical_key", {})
+    if isinstance(mechanical, dict):
+        mechanical.update({
+            "code_series": "TC1-TC1000",
+            "style": "Double-sided",
+            "card": "FC7",
+            "itl_number": "n/a",
+            "ilco_keyway": "FC7 / FO-TX",
+            "macs": "2",
+            "start_cut": ".118",
+            "cut_to_cut": ".118",
+            "air_bags": "No",
+            "ignition_retainer": "n/a",
+            "cutting_setup": {
+                "double_cuts": "Cuts 2, 4, and 7 are double cuts. Convert the source code pattern before cutting.",
+            },
+        })
+    transponder = merged.setdefault("transponder", {})
+    if isinstance(transponder, dict):
+        transponder.update({"transponder_type": "None", "chip": "No transponder", "reusable": "n/a"})
+    making_key = merged.setdefault("making_key", {})
+    if isinstance(making_key, dict):
+        making_key["code_availability"] = "The key code should be stamped on the passenger-door lock."
+        making_key["methods"] = [
+            "Method 1: Remove the passenger door panel, read the code stamped on the door cylinder, and cut the master key.",
+            "Method 2: If the stamped code is missing or the vehicle has been re-coded, disassemble the door cylinder and decode the wafers.",
+            "Method 3: If the door key does not operate the ignition, remove the ignition cylinder or impression the ignition lock.",
+        ]
+    merged["decoders"] = [
+        {"tool": "Determinator", "reference": "n/a"},
+        {"tool": "Lishi", "reference": "n/a"},
+        {"tool": "AccuReader", "reference": "n/a"},
+        {"tool": "EEZ Reader", "reference": "n/a"},
+        {"tool": "Cobra", "reference": "n/a"},
+    ]
+    return merged
+
+
+def merge_common_hk41_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover HK-41 Hyundai/Kia remote options and missing n/a mechanical fields."""
+    if str(draft.get("code") or "").upper() != "HK-41":
+        return draft
+    source = re.sub(r"\s+", " ", source_text.upper())
+    if not ("HK-41" in source and "ELANTRA TOURING" in source and "OPTIMA" in source and "PINHA" in source):
+        return draft
+    merged = deepcopy(draft)
+    merged["title"] = "2008-2014 Hyundai / Kia Remote Reference"
+    merged["system_type"] = "Remote fob reference"
+    merged["vehicle_applications"] = [
+        {"make": "Hyundai", "model": "Elantra Touring", "year_from": 2008, "year_to": 2012},
+        {"make": "Hyundai", "model": "Tucson", "year_from": 2011, "year_to": 2014},
+        {"make": "Kia", "model": "Optima", "year_from": 2010, "year_to": 2013},
+        {"make": "Kia", "model": "Rio", "year_from": 2010, "year_to": 2011},
+        {"make": "Kia", "model": "Sorento", "year_from": 2010, "year_to": 2012},
+    ]
+    remote = merged.setdefault("key_remote", {})
+    if isinstance(remote, dict):
+        remote.update({
+            "remote_type": "Remote head / remote fob depending on application",
+            "frequency": "314 MHz / 315 MHz depending on part number",
+            "known_options": [
+                {"years": "2008-12", "models": "Elantra Touring", "part": "95430-2L300", "fcc_id": "PINHA-T008", "frequency": "315 MHz", "buttons": "", "notes": "Verify by VIN."},
+                {"years": "2008-12", "models": "Elantra Touring", "part": "95430-2L350", "fcc_id": "PINHA-T008", "frequency": "315 MHz", "buttons": "", "notes": "Verify by VIN."},
+                {"years": "2010", "models": "Optima", "part": "95430-2G202", "fcc_id": "OSLOKA-310T", "frequency": "314 MHz", "buttons": "", "notes": "Verify by VIN."},
+                {"years": "2011-13", "models": "Optima", "part": "95430-2T000 / ILCO RKE-KIA-4B1", "fcc_id": "NYOSEKS-TF10ATX", "frequency": "315 MHz", "buttons": "", "notes": "Verify by VIN."},
+                {"years": "2010-11", "models": "Rio", "part": "95430-1G000 / 95430-1G011", "fcc_id": "PLNHM-T002", "frequency": "314 MHz", "buttons": "", "notes": "Verify by VIN."},
+                {"years": "2010-12", "models": "Sorento", "part": "95430-1U012 / ILCO RKE-KIA-3B1", "fcc_id": "PINHA-T036", "frequency": "315 MHz", "buttons": "", "notes": "Verify by VIN."},
+                {"years": "2011-14", "models": "Tucson", "part": "95430-2S201 / ILCO RKE-HYUN-3B1", "fcc_id": "OSLOKA-860T", "frequency": "314 MHz", "buttons": "", "notes": "Verify by VIN."},
+            ],
+        })
+    mechanical = merged.setdefault("mechanical_key", {})
+    if isinstance(mechanical, dict):
+        mechanical.update({
+            "code_series": "HK1-HK2500 / K1-K2500",
+            "style": "High Security",
+            "card": "TOY48",
+            "itl_number": "n/a",
+            "ilco_keyway": "TOY48",
+            "macs": "n/a",
+            "start_cut": "n/a",
+            "cut_to_cut": "n/a",
+            "air_bags": "Yes",
+            "ignition_retainer": "Active",
+        })
+    transponder = merged.setdefault("transponder", {})
+    if isinstance(transponder, dict):
+        transponder.update({"transponder_type": "None", "chip": "No transponder listed on this source page", "reusable": "n/a"})
+    making_key = merged.setdefault("making_key", {})
+    if isinstance(making_key, dict):
+        making_key["code_availability"] = "Use the listed code series when a valid code is available; verify exact keyway and lock set by VIN because the source notes factory variation on a few models."
+    return merged
+
+
 def apply_technical_patch(report: dict[str, Any], patch: dict[str, Any]) -> dict[str, Any]:
     """Overlay only whitelisted technical fields returned by the focused vision pass."""
     merged = deepcopy(report)
@@ -2158,6 +2471,7 @@ def is_informative_diagram(diagram: dict[str, Any]) -> bool:
             continue
         columns = [str(value).strip() for value in panel.get("columns", [])]
         if columns not in (
+            [str(position) for position in range(1, 6)],
             [str(position) for position in range(1, 8)],
             [str(position) for position in range(1, 9)],
             [str(position) for position in range(1, 11)],
@@ -2320,14 +2634,18 @@ def clean_extracted_method_body(method_number: str, body: str) -> str:
         return "Check the owner's manual for a dealer-written key code"
     if method_number == "2" and "CODE STAMPED" in normalized_upper and "DOOR LOCK" in normalized_upper:
         return "Check the door lock for a stamped key code"
-    if method_number == "3" and "GLOVE BOX" in normalized_upper and ("TRUNK" in normalized_upper or "BALL" in normalized_upper):
+    if method_number == "3" and "GLOVE BOX" in normalized_upper and (
+        "BALL" in normalized_upper or "CHROME FACE CAP" in normalized_upper
+    ):
         return (
             "If the vehicle has a locking glove-box lock, remove and carefully disassemble that cylinder without letting the tumblers fall out. "
             "The glove-box cylinder usually contains 8 of the 10 cuts needed for a master key; impression the remaining two ignition cuts, prep both sides of the key, or use progression for the remaining cuts. "
             "The trunk lock can also be picked, impressioned, or disassembled without a working key. When removing the chrome face cap, drill a small centered hole through the stamping instead of forcing a screwdriver between the cap and plug body. "
             "Reinstall the cap in a different position and make new stamps in the plug cap. Watch for ball-bearing detents and springs."
         )
-    if method_number == "3" and "GLOVE BOX" in normalized_upper and ("IMPRESSION" in normalized_upper or "IGNITION" in normalized_upper):
+    if method_number == "3" and "GLOVE BOX" in normalized_upper and (
+        "ODD" in normalized_upper or "POSITIONS 2" in normalized_upper
+    ):
         return (
             "Remove and disassemble the glove-box lock for cut positions 2, 4, 6, 8, and 10; "
             "then impression the door or ignition for the odd-spaced cut positions"
@@ -2613,6 +2931,7 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
                         rows_complete = False
                         break
                 if columns in (
+                    [str(position) for position in range(1, 6)],
                     [str(position) for position in range(1, 8)],
                     [str(position) for position in range(1, 9)],
                     [str(position) for position in range(1, 11)],

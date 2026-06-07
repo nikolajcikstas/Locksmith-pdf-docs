@@ -18,7 +18,7 @@ from locksmith_docs.db.load_imported_pages import load_imported_pages
 from locksmith_docs.db.load_vehicle_candidates import main as load_vehicle_candidates_main
 from locksmith_docs.db.connection import get_connection
 from locksmith_docs.db.init_schema import init_schema
-from locksmith_docs.db.report_seed import ensure_bundled_parser_seed
+from locksmith_docs.db.report_seed import ensure_bundled_parser_seed, ensure_bundled_report_seed, write_json_atomic
 from locksmith_docs.db.repository import LocksmithRepository
 from locksmith_docs.processing.ai_text_cleaner import clean_page_with_ai
 from locksmith_docs.processing.job_status import has_running_job, update_job
@@ -32,6 +32,15 @@ from locksmith_docs.reports.verified_facts import apply_verified_facts
 def safe_stem(path: Path) -> str:
     stem = re.sub(r"[^A-Za-z0-9]+", "_", path.stem).strip("_")
     return stem or "document"
+
+
+def read_report_drafts_json(report_path: Path) -> list[dict[str, Any]]:
+    try:
+        payload = json.loads(report_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        ensure_bundled_report_seed()
+        payload = json.loads(report_path.read_text(encoding="utf-8"))
+    return payload if isinstance(payload, list) else []
 
 
 def render_pdf_to_imported_document(
@@ -278,7 +287,7 @@ def rebuild_catalog(
         sys.argv = original_argv
 
     report_path = get_settings().data_dir / "report_drafts.json"
-    report_drafts = json.loads(report_path.read_text(encoding="utf-8"))
+    report_drafts = read_report_drafts_json(report_path)
     publishable = sum(
         bool(item.get("ai_verified"))
         and report_is_publishable(item.get("draft") or {}, item.get("publication_issues") or [])
@@ -381,7 +390,7 @@ def refresh_verified_output() -> dict[str, int]:
     report_path = get_settings().data_dir / "report_drafts.json"
     if not report_path.exists():
         raise RuntimeError("No verified report data is available to refresh yet.")
-    report_drafts = json.loads(report_path.read_text(encoding="utf-8"))
+    report_drafts = read_report_drafts_json(report_path)
     sections_by_code = {}
     candidates_path = get_settings().data_dir / "parser_candidates.json"
     if candidates_path.exists():
@@ -406,7 +415,7 @@ def refresh_verified_output() -> dict[str, int]:
             item["publication_issues"] = issues
             if issues:
                 withdrawn.append(str(item.get("system_code") or ""))
-    report_path.write_text(json.dumps(report_drafts, indent=2, ensure_ascii=False), encoding="utf-8")
+    write_json_atomic(report_path, report_drafts)
     repo = LocksmithRepository()
     repo.retract_unpublishable_systems([code for code in withdrawn if code])
     import_report_drafts_to_database(report_drafts, publish=True, replace=True)
