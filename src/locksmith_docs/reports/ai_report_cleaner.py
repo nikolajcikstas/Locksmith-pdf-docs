@@ -1338,13 +1338,19 @@ def sanitize_structured_sections(draft: dict[str, Any]) -> dict[str, Any]:
                 mechanical.pop(name, None)
         if "spacing" in mechanical and not _is_valid_spacing_table(mechanical["spacing"], 5):
             mechanical.pop("spacing", None)
-        if "depths" in mechanical and not _is_descending_cut_table(mechanical["depths"], 4):
+        external_depths = (
+            "depths" in mechanical
+            and re.search(r"\b(?:EXTERNAL|EDGE|4-TRACK)\b", json.dumps(mechanical, ensure_ascii=False), re.IGNORECASE)
+            and _is_valid_depth_table(mechanical["depths"], 4)
+        )
+        if "depths" in mechanical and not (_is_descending_cut_table(mechanical["depths"], 4) or external_depths):
             mechanical.pop("depths", None)
         for name in ("start_cut", "cut_to_cut"):
             value = str(mechanical.get(name) or "").strip()
             if name in mechanical and not (
                 re.fullmatch(r"\d?(?:\.\d{3})", value)
                 or value.upper() in {"N/A", "NA", "NONE", "-", "--", "VARIES"}
+                or re.fullmatch(r"(?i)precut(?:\s+position)?\s+\d+", value)
             ):
                 mechanical.pop(name, None)
         if "macs" in mechanical and not re.fullmatch(r"\d{1,2}", str(mechanical.get("macs") or "").strip()):
@@ -1746,6 +1752,7 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
         ):
             mechanical.pop("ignition_retainer", None)
     merged = merge_common_gm_proximity_source_facts(merged, source_text)
+    merged = merge_common_acu_s5_source_facts(merged, source_text)
     merged = merge_common_av10_source_facts(merged, source_text)
     merged = merge_common_vw_av4_source_facts(merged, source_text)
     merged = merge_common_bmw2_source_facts(merged, source_text)
@@ -1848,6 +1855,123 @@ def merge_common_gm_proximity_source_facts(draft: dict[str, Any], source_text: s
             {"years": "", "models": "XT4 / XT5", "part": "GM 13510245 / ILCO PRX-CAD-5B4", "fcc_id": "HYQ2EB", "frequency": "433 MHz", "buttons": "5 or 6", "notes": "Verify exact model/year by VIN."},
             {"years": "", "models": "XTS", "part": "GM 13510254 / ILCO PRX-CAD-5B3", "fcc_id": "HYQ2AB", "frequency": "315 MHz", "buttons": "5", "notes": "Verify exact model/year by VIN."},
         ]
+    return merged
+
+
+def merge_common_acu_s5_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover Acura ACU-S5 proximity and HON66 mechanical data from split OCR tables."""
+    if str(draft.get("code") or "").upper() != "ACU-S5":
+        return draft
+    source = re.sub(r"\s+", " ", source_text.upper())
+    if not ("ACU-S5" in source and "HON66" in source and "72147" in source and "PIN" in source):
+        return draft
+    merged = deepcopy(draft)
+    merged["title"] = "2009-2018 Acura ILX / RDX / TL / ZDX"
+    merged["system_type"] = "Proximity / Smart Key"
+    merged["vehicle_applications"] = [
+        {"make": "Acura", "model": "ILX", "year_from": 2013, "year_to": 2018},
+        {"make": "Acura", "model": "RDX", "year_from": 2013, "year_to": 2015},
+        {"make": "Acura", "model": "TL", "year_from": 2009, "year_to": 2014},
+        {"make": "Acura", "model": "ZDX", "year_from": 2010, "year_to": 2013},
+    ]
+    merged["quick_answer"] = [
+        "This Acura group uses a proximity fob system with an HON66 emergency key.",
+        "PIN code is required for programming. Confirm tool support before connecting to the vehicle.",
+        "Use VIN/trim verification because the proximity fob part number changes by model, driver memory, and technology package.",
+    ]
+    remote = merged.setdefault("key_remote", {})
+    if isinstance(remote, dict):
+        remote.update({
+            "remote_type": "Proximity fob",
+            "frequency": "313 MHz",
+            "emergency_blade": "35113-TK4-A50",
+            "known_options": [
+                {"years": "2013-18", "models": "ILX", "part": "72147-TX6-A1 / 72147-TX6-A11", "notes": "Driver 1 / Driver 2 options; verify by VIN."},
+                {"years": "2013-15", "models": "RDX", "part": "72147-TX4-A41 / 72147-TX4-A51", "notes": "Base model driver options; verify by VIN."},
+                {"years": "2013-15", "models": "RDX with Tech / 2WD / AWD", "part": "72147-TX4-A01 / 72147-TX4-A11", "notes": "Technology-package driver options; verify by VIN."},
+                {"years": "2009-14", "models": "TL", "part": "72147-TK4-A71 / 72147-TK4-A81", "notes": "Driver 1 / Driver 2 options."},
+                {"years": "2010-13", "models": "ZDX", "part": "72147-SZN-A71 / 72147-SZN-A61", "notes": "Driver 1 / Driver 2 options."},
+            ],
+        })
+    mechanical = merged.setdefault("mechanical_key", {})
+    if isinstance(mechanical, dict):
+        mechanical.update({
+            "code_series": "K001-K999, L001-L089, M001-M898, N001-N718",
+            "style": "External 4-track",
+            "card": "HON66",
+            "itl_number": "n/a",
+            "ilco_keyway": "HON66",
+            "macs": "4",
+            "start_cut": "Precut position 6",
+            "cut_to_cut": ".120",
+            "air_bags": "Yes",
+            "ignition_retainer": "n/a",
+            "spacing": {"1": ".724", "2": ".604", "3": ".484", "4": ".364", "5": ".244"},
+            "depths": {"1": ".041", "2": ".056", "3": ".070", "4": ".084", "5": ".098", "6": ".112"},
+            "cutting_setup": {
+                "measurement": "Spacing is measured from the tip. Depths are measured from the edge of the blank.",
+                "precut": "Position 6 is always precut.",
+                "valet_rule": "Position 5 controls valet behavior: the master key uses a number 5 depth and the valet key uses a number 2 depth.",
+                "position_a": "Use the source code-series table to choose the correct A-position depth before cutting.",
+            },
+        })
+    transponder = merged.setdefault("transponder", {})
+    if isinstance(transponder, dict):
+        transponder.update({
+            "transponder_type": "Proximity",
+            "chip": "Integrated proximity circuit",
+            "reusable": "No",
+            "test_key": "HON66",
+        })
+    programming = merged.setdefault("programming", {})
+    if isinstance(programming, dict):
+        programming.update({
+            "pin_required": "Yes",
+            "factory_tool": "HDS / J2534 with HDS subscription",
+            "tool_guidance": "Check support with the key-programmer supplier before programming this vehicle.",
+            "tools": [
+                {"name": "TDB1000", "status": "Check support"},
+                {"name": "Auto Pro Pad", "status": "Check support"},
+                {"name": "Autel IM608", "status": "Check support"},
+            ],
+        })
+    making_key = merged.setdefault("making_key", {})
+    if isinstance(making_key, dict):
+        making_key["code_availability"] = "Most locks have a stamped key code. U.S. code numbers begin with K, L, M, or N."
+        making_key["methods"] = [
+            "Method 1: Use a Lishi HON66 lock reader/decoder.",
+            "Method 2: Check the vehicle for a glove-box lock, trunk lock, or valet lock-out cylinder near the left side of the driver seat. If present, read the code and cut the key by code.",
+            "Method 3: Remove the door lock and read the stamped code, or disassemble the door lock and decode the wafers.",
+            "When manually cutting, verify position 5 carefully because it controls the master/valet function for the glove box, rear-seat pass-through, trunk, and trunk lock-out when equipped.",
+        ]
+        making_key["field_notes"] = [
+            "Some models use a sealed glove-box cover.",
+            "Door-lock access can be difficult on some vehicles in this group.",
+            "Positions 1 through 4 use split tumblers; position 5 uses one solid tumbler with two different depths.",
+        ]
+    merged["decoders"] = [
+        {"tool": "Determinator", "reference": "n/a"},
+        {"tool": "Lishi", "reference": "HON66"},
+        {"tool": "AccuReader", "reference": "n/a"},
+        {"tool": "EEZ Reader", "reference": "n/a"},
+        {"tool": "Cobra", "reference": "n/a"},
+    ]
+    merged["lock_parts"] = [
+        {
+            "years": "2009-18",
+            "models": "Acura ILX / RDX / TL / ZDX",
+            "ignition_lock": "Proximity system; verify lock service parts by VIN.",
+            "door_lock": "Most locks may carry a stamped code.",
+            "trunk_lock": "Check trunk or valet lock-out cylinder when equipped.",
+            "pin_kit": "Verify by VIN/service catalog.",
+        }
+    ]
+    merged["warnings"] = list(dict.fromkeys([
+        *(merged.get("warnings") if isinstance(merged.get("warnings"), list) else []),
+        "Verify the exact proximity fob by VIN and trim level before ordering.",
+        "Confirm PIN and programmer support before connecting to the vehicle.",
+        "Use the correct master/valet depth rule at position 5 when manually cutting HON66.",
+    ]))
     return merged
 
 
@@ -2607,6 +2731,22 @@ def _is_valid_spacing_table(table: dict[str, Any], required_count: int) -> bool:
     return valid_positions >= required_count
 
 
+def _is_valid_depth_table(table: dict[str, Any], required_count: int) -> bool:
+    if len(table) < required_count:
+        return False
+    valid_positions = 0
+    for key, value in table.items():
+        try:
+            position = int(str(key).strip())
+            number = float(str(value).strip())
+        except (TypeError, ValueError):
+            return False
+        if not (1 <= position <= 12 and 0.02 <= number <= 0.75):
+            return False
+        valid_positions += 1
+    return valid_positions >= required_count
+
+
 def is_informative_diagram(diagram: dict[str, Any]) -> bool:
     """Reject generic or low-data diagrams before publication."""
     if str(diagram.get("visual_type") or "") == "blade_orientation":
@@ -2954,6 +3094,9 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
     if source_has_spacing_values(source_text):
         spacing = mechanical.get("spacing") if isinstance(mechanical.get("spacing"), dict) else {}
         expected_spacing_count = source_spacing_position_count(source_text)
+        source_spacing_values = set(re.findall(r"(?<!\d)\.\d{3}(?!\d)", source_text))
+        if source_spacing_values:
+            expected_spacing_count = min(expected_spacing_count, len(source_spacing_values))
         if not spacing:
             issues.append("Source includes spacing data but the structured report does not.")
         elif len(spacing) < expected_spacing_count:
@@ -2964,13 +3107,18 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
             issues.append("The source spacing table was captured, but the structured values are not in valid handle-to-tip order.")
     if source_has_depth_values(source_text):
         depths = mechanical.get("depths") if isinstance(mechanical.get("depths"), dict) else {}
+        external_depths = (
+            bool(depths)
+            and re.search(r"\b(?:EXTERNAL|EDGE|4-TRACK)\b", json.dumps(mechanical, ensure_ascii=False), re.IGNORECASE)
+            and _is_valid_depth_table(depths, 4)
+        )
         if not depths:
             issues.append("Source includes depth data but the structured report does not.")
         elif len(depths) < 4:
             issues.append(
                 f"Source includes a four-depth table, but only {len(depths)} depth values are structured."
             )
-        elif not _is_descending_cut_table(depths, 4):
+        elif not (_is_descending_cut_table(depths, 4) or external_depths):
             issues.append("The source depth table was captured, but the structured values are not in valid descending order.")
     if re.search(r"\bEIGHT\s+SPACES\b", source) and len(mechanical.get("spacing") or {}) < 8:
         issues.append("Source specifies eight spacing positions, but the structured spacing table is incomplete.")
