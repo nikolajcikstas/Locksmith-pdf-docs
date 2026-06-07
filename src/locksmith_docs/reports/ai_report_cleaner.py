@@ -2839,6 +2839,8 @@ def source_remote_option_count(source_text: str) -> int:
         combo = " ".join(value for value in (remote_part, emergency_key, frequency) if value)
         normalized = re.sub(r"[^A-Z0-9]+", " ", combo or snippet)
         normalized = re.sub(r"\b(?:REMOTE|EMERG|KEY|FCC|INFO|MHZ|BUTTONS?)\b", " ", normalized)
+        normalized = normalized.replace("4NO", "4N0").replace("8SO", "8S0")
+        normalized = normalized.replace("AKOI", "AK01").replace("IVZ", "IYZ")
         normalized = re.sub(r"\b([0-9])O\b", r"\g<1>0", normalized)
         normalized = re.sub(r"\b([0-9A-Z]+)NO\b", r"\g<1>N0", normalized)
         normalized = re.sub(r"\bK\s+4", "4", normalized)
@@ -2850,6 +2852,22 @@ def source_remote_option_count(source_text: str) -> int:
     if snippets:
         return len(snippets)
     return len(re.findall(r"\b(?:FOB\s+)?REMOTE\s*:", source))
+
+
+def source_remote_unique_part_count(source_text: str) -> int:
+    source = re.sub(r"\s+", " ", source_text.upper())
+    parts: set[str] = set()
+    for match in re.finditer(
+        r"\b(?:FOB\s+)?REMOTE\s*:\s*([A-Z0-9 -]{4,40}?)(?:\s*-\s*EMERG|\s+EMERG|\s*-\s*FCC|\s+\|)",
+        source,
+    ):
+        part = re.sub(r"[^A-Z0-9]+", " ", match.group(1))
+        part = part.replace("4NO", "4N0").replace("8SO", "8S0")
+        part = re.sub(r"\b([0-9])O\b", r"\g<1>0", part)
+        part = re.sub(r"\s+", " ", part).strip()
+        if len(part) >= 6:
+            parts.add(part)
+    return len(parts)
 
 
 def _sync_mechanical_tables_from_diagrams(draft: dict[str, Any], diagrams: list[dict[str, Any]]) -> None:
@@ -2898,6 +2916,9 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
         if "FCC" not in options_text:
             issues.append("Source includes FCC information, but it is not associated with compatible remote options.")
         source_remote_count = source_remote_option_count(source_text)
+        unique_remote_count = source_remote_unique_part_count(source_text)
+        if unique_remote_count:
+            source_remote_count = min(source_remote_count, unique_remote_count)
         if source_remote_count >= 2 and len(known_options) < source_remote_count:
             issues.append(
                 f"Source lists {source_remote_count} remote options, but the structured table contains only {len(known_options)}."
