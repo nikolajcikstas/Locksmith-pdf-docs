@@ -267,6 +267,8 @@ def rebuild_catalog(
 
     original_argv = sys.argv[:]
     candidates_path = get_settings().data_dir / "parser_candidates.json"
+    if skip_ocr_pages and not candidates_path.exists():
+        ensure_bundled_parser_seed()
     if not skip_ocr_pages or not candidates_path.exists():
         run_module("locksmith_docs.parsing.build_candidates")
         try:
