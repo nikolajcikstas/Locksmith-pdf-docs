@@ -1595,12 +1595,75 @@ def normalize_diagram_rows(raw_rows: Any, columns: list[str]) -> list[list[str]]
 
 def enforce_verified_diagram_positions(draft: dict[str, Any], diagrams: list[dict[str, Any]]) -> None:
     """Keep source-verified lock-position maps from being distorted by broad cleanup rules."""
-    if str(draft.get("code") or "").upper() != "AV-8":
-        return
+    code = str(draft.get("code") or "").upper()
     mechanical = draft.get("mechanical_key") if isinstance(draft.get("mechanical_key"), dict) else {}
     keyway = str(mechanical.get("ilco_keyway") or mechanical.get("test_key") or "").upper()
-    if "HU66" not in keyway:
+    verified_maps: dict[str, dict[str, Any]] = {
+        "AV-3": {
+            "columns": [str(position) for position in range(1, 11)],
+            "rows": {
+                "IGNITION": set(range(1, 11)),
+                "DOOR": set(range(1, 11)),
+                "GLOVE": {2, 4, 6, 8, 10},
+            },
+        },
+        "AV-8": {
+            "columns": [str(position) for position in range(1, 9)],
+            "requires_keyway": "HU66",
+            "rows": {
+                "IGNITION": set(range(1, 9)),
+                "DOOR": set(range(1, 9)),
+                "TRUNK": set(range(1, 9)),
+                "HATCH": set(range(1, 9)),
+                "GLOVE": {4, 5, 6},
+            },
+        },
+        "AV-24": {
+            "columns": [str(position) for position in range(1, 9)],
+            "rows": {
+                "IGNITION": set(range(1, 9)),
+                "DOOR": set(range(1, 9)),
+                "TRUNK": set(range(1, 9)),
+            },
+        },
+        "FORD-C34": {
+            "columns": [str(position) for position in range(1, 9)],
+            "rows": {
+                "IGNITION": {1, 3, 4, 5, 6, 7, 8},
+                "DOOR": {3, 4, 5, 6, 7, 8},
+                "TRUNK": {3, 4, 5, 6, 7, 8},
+                "HATCH": {3, 4, 5, 6, 7, 8},
+                "GLOVE": {4, 5, 6},
+            },
+        },
+        "FORD-X3": {
+            "columns": ["1", "2", "2", "3", "4", "4", "5", "6", "7", "7"],
+            "rows": {
+                "IGNITION": set(range(1, 11)),
+                "DOOR": set(range(1, 11)),
+                "TRUNK": set(range(1, 11)),
+            },
+        },
+        "GM-P10": {
+            "columns": [str(position) for position in range(1, 11)],
+            "rows": {
+                "IGNITION": set(),
+                "DOOR": {5, 6, 7, 8, 9, 10},
+                "TRUNK": {5, 6, 7, 8, 9, 10},
+                "SPARE": {6, 7, 8, 9, 10},
+                "STOWAGE": {6, 7, 8, 9, 10},
+                "GLOVE": {7, 8, 9, 10},
+            },
+        },
+    }
+    verified = verified_maps.get(code)
+    if not verified:
         return
+    required_keyway = str(verified.get("requires_keyway") or "")
+    if required_keyway and required_keyway not in keyway:
+        return
+    expected_columns = verified["columns"]
+    verified_rows = verified["rows"]
     for diagram in diagrams:
         title = str(diagram.get("title") or "").upper()
         caption = str(diagram.get("caption") or "").upper()
@@ -1611,18 +1674,21 @@ def enforce_verified_diagram_positions(draft: dict[str, Any], diagrams: list[dic
             if not isinstance(panel, dict):
                 continue
             columns = [str(value).strip() for value in panel.get("columns", [])]
-            if columns != [str(position) for position in range(1, 9)]:
+            if columns != expected_columns:
                 continue
             rows = panel.get("rows") if isinstance(panel.get("rows"), list) else []
             for index, row in enumerate(rows):
                 if not (isinstance(row, list) and row):
                     continue
-                if "GLOVE" in str(row[0]).upper():
-                    rows[index] = _position_row(str(row[0]), {4, 5, 6}, 8)
-                elif "IGNITION" in str(row[0]).upper():
-                    rows[index] = _position_row(str(row[0]), set(range(1, 9)), 8)
-                elif any(token in str(row[0]).upper() for token in ("DOOR", "TRUNK", "HATCH")):
-                    rows[index] = _position_row(str(row[0]), set(range(1, 9)), 8)
+                label = str(row[0])
+                label_upper = label.upper()
+                for token, positions in verified_rows.items():
+                    if token in label_upper:
+                        rows[index] = [label] + [
+                            "filled" if position in positions else ""
+                            for position in range(1, len(expected_columns) + 1)
+                        ]
+                        break
 
 
 def merge_reliable_extracted_facts(cleaned: dict[str, Any], source_draft: dict[str, Any]) -> dict[str, Any]:
@@ -1786,8 +1852,10 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
             mechanical.pop("ignition_retainer", None)
     merged = merge_common_gm_proximity_source_facts(merged, source_text)
     merged = merge_common_acu_s5_source_facts(merged, source_text)
+    merged = merge_common_av3_source_facts(merged, source_text)
     merged = merge_common_av8_source_facts(merged, source_text)
     merged = merge_common_av10_source_facts(merged, source_text)
+    merged = merge_common_av24_source_facts(merged, source_text)
     merged = merge_common_vw_av4_source_facts(merged, source_text)
     merged = merge_common_bmw2_source_facts(merged, source_text)
     merged = merge_common_dge20_source_facts(merged, source_text)
@@ -1889,6 +1957,20 @@ def merge_common_gm_proximity_source_facts(draft: dict[str, Any], source_text: s
             {"years": "", "models": "XT4 / XT5", "part": "GM 13510245 / ILCO PRX-CAD-5B4", "fcc_id": "HYQ2EB", "frequency": "433 MHz", "buttons": "5 or 6", "notes": "Verify exact model/year by VIN."},
             {"years": "", "models": "XTS", "part": "GM 13510254 / ILCO PRX-CAD-5B3", "fcc_id": "HYQ2AB", "frequency": "315 MHz", "buttons": "5", "notes": "Verify exact model/year by VIN."},
         ]
+    merged["procedure_diagrams"] = [_lock_position_diagram(
+        "5922070 lock-position guide",
+        "Original redrawn 10-position map. Ignition is not keyed; door and tailgate-related locks use the listed rear positions.",
+        10,
+        [
+            _position_row("Ignition (none)", set(), 10),
+            _position_row("Doors", {5, 6, 7, 8, 9, 10}, 10),
+            _position_row("Trunk (if equipped)", {5, 6, 7, 8, 9, 10}, 10),
+            _position_row("Spare tire (if equipped)", {6, 7, 8, 9, 10}, 10),
+            _position_row("Stowage (if equipped)", {6, 7, 8, 9, 10}, 10),
+            _position_row("Glove box", {7, 8, 9, 10}, 10),
+        ],
+        "Read positions from bow/handle to tip. Rows represent the locks listed in the source map.",
+    )]
     return merged
 
 
@@ -2006,6 +2088,78 @@ def merge_common_acu_s5_source_facts(draft: dict[str, Any], source_text: str) ->
         "Confirm PIN and programmer support before connecting to the vehicle.",
         "Use the correct master/valet depth rule at position 5 when manually cutting HON66.",
     ]))
+    return merged
+
+
+def merge_common_av3_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover Porsche AV-3 10-position mechanical key data and lock map."""
+    if str(draft.get("code") or "").upper() != "AV-3":
+        return draft
+    source = re.sub(r"\s+", " ", source_text.upper())
+    if not ("911" in source and ("HC/NC" in source or "HC / NC" in source) and "GLOVE BOX" in source):
+        return draft
+    merged = deepcopy(draft)
+    merged["title"] = "1981-1998 Porsche 911"
+    merged["system_type"] = "Mechanical key"
+    merged["vehicle_applications"] = [
+        {"make": "Porsche", "model": "911", "year_from": 1981, "year_to": 1998},
+    ]
+    remote = merged.setdefault("key_remote", {})
+    if isinstance(remote, dict):
+        remote.update({"remote_type": "None", "frequency": "n/a", "known_options": []})
+    mechanical = merged.setdefault("mechanical_key", {})
+    if isinstance(mechanical, dict):
+        mechanical.update({
+            "code_series": "HC / NC 1-2080",
+            "style": "Double-sided",
+            "card": "CF36",
+            "itl_number": "354",
+            "ilco_keyway": "P05 / P07",
+            "macs": "2",
+            "start_cut": ".118",
+            "cut_to_cut": ".079",
+            "air_bags": "No",
+            "ignition_retainer": "Spring",
+            "spacing": {
+                "1": ".118", "2": ".197", "3": ".276", "4": ".354", "5": ".433",
+                "6": ".512", "7": ".591", "8": ".699", "9": ".748", "10": ".827",
+            },
+            "depths": {"1": ".272", "2": ".252", "3": ".232", "4": ".213"},
+        })
+    transponder = merged.setdefault("transponder", {})
+    if isinstance(transponder, dict):
+        transponder.update({"transponder_type": "None", "chip": "No transponder", "reusable": "n/a"})
+    making_key = merged.setdefault("making_key", {})
+    if isinstance(making_key, dict):
+        making_key["code_availability"] = "Many older door locks have a stamped code; use a valid key code when available."
+        making_key["methods"] = [
+            "Check the owner's manual for a key code written in by the dealer.",
+            "Check the door lock for a stamped code.",
+            "Remove and disassemble the glove-box lock to recover positions 2, 4, 6, 8 and 10, then impression or progress the door or ignition for the odd-position cuts.",
+            "Disassemble the door lock when a code is not available.",
+        ]
+    merged["decoders"] = [
+        {"tool": "Determinator", "reference": "n/a"},
+        {"tool": "Lishi", "reference": "n/a"},
+        {"tool": "AccuReader", "reference": "n/a"},
+        {"tool": "EEZ Reader", "reference": "n/a"},
+        {"tool": "Cobra", "reference": "n/a"},
+    ]
+    merged["procedure_diagrams"] = [{
+        "title": "P05 / P07 lock-position guide",
+        "placement": "making_key",
+        "caption": "Original redrawn 10-position map. The glove-box lock provides even positions 2, 4, 6, 8 and 10.",
+        "panels": [{
+            "label": "Lock positions",
+            "columns": [str(position) for position in range(1, 11)],
+            "rows": [
+                _position_row("Ignition", set(range(1, 11)), 10),
+                _position_row("Doors", set(range(1, 11)), 10),
+                _position_row("Glove box", {2, 4, 6, 8, 10}, 10),
+            ],
+            "note": "Use the glove-box lock for even-position cuts, then impression/progress the remaining odd positions.",
+        }],
+    }]
     return merged
 
 
@@ -2267,6 +2421,74 @@ def merge_common_av10_source_facts(draft: dict[str, Any], source_text: str) -> d
         "No cloning is listed for this proximity system.",
     ]
     merged["warnings"] = list(dict.fromkeys(str(item).strip() for item in warnings if str(item).strip()))
+    return merged
+
+
+def merge_common_av24_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover Volkswagen Routan AV-24 FOBIK lock-position map and core facts."""
+    if str(draft.get("code") or "").upper() != "AV-24":
+        return draft
+    source = re.sub(r"\s+", " ", source_text.upper())
+    if not ("AV-24" in source and "ROUTAN" in source and ("FOBIK" in source or "FOBIE" in source)):
+        return draft
+    merged = deepcopy(draft)
+    merged["title"] = "2009-2012 Volkswagen Routan"
+    merged["system_type"] = "FOBIK / transponder remote"
+    merged["vehicle_applications"] = [
+        {"make": "Volkswagen", "model": "Routan", "year_from": 2009, "year_to": 2012},
+    ]
+    mechanical = merged.setdefault("mechanical_key", {})
+    if isinstance(mechanical, dict):
+        mechanical.update({
+            "code_series": "M1-M2618",
+            "style": "Double-sided",
+            "card": "CX102",
+            "ilco_keyway": "Y157 / Y159",
+            "macs": "2",
+            "start_cut": ".310",
+            "cut_to_cut": ".092",
+            "air_bags": "Yes",
+            "spacing": {
+                "1": ".941", "2": ".849", "3": ".757", "4": ".665",
+                "5": ".573", "6": ".481", "7": ".389", "8": ".297",
+            },
+            "depths": {"1": ".340", "2": ".315", "3": ".290", "4": ".265"},
+        })
+    transponder = merged.setdefault("transponder", {})
+    if isinstance(transponder, dict):
+        transponder.update({
+            "transponder_type": "Yes",
+            "chip": "Philips 46",
+            "reusable": "No; must be unlocked",
+            "test_key": "Y157 / Y159",
+            "cloning": "No Keyless GO cloning is listed because this is a proximity/FOBIK system.",
+        })
+    making_key = merged.setdefault("making_key", {})
+    if isinstance(making_key, dict):
+        making_key["code_availability"] = "No codes are listed on any locks."
+        making_key["methods"] = [
+            "Use a compatible lock decoder/reader to decode the door lock.",
+            "Use an approved Chrysler/Routan tryout set when that workflow is appropriate.",
+            "Remove a door or trunk cylinder and decode it when in-place decoding is not practical.",
+        ]
+    merged["decoders"] = [
+        {"tool": "Determinator", "reference": "CHR 2"},
+        {"tool": "Lishi", "reference": "CY24"},
+        {"tool": "AccuReader", "reference": "CHRY 8"},
+        {"tool": "EEZ Reader", "reference": "Y157"},
+        {"tool": "Cobra", "reference": "KDC8"},
+    ]
+    merged["procedure_diagrams"] = [_lock_position_diagram(
+        "Y157/Y159 FOBIK lock-position guide",
+        "Original redrawn Routan lock-position map. Ignition, doors, and trunk use all eight positions; trunk applies only when equipped.",
+        8,
+        [
+            _position_row("Ignition (FOBIK)", set(range(1, 9)), 8),
+            _position_row("Doors", set(range(1, 9)), 8),
+            _position_row("Trunk (if equipped)", set(range(1, 9)), 8),
+        ],
+        "No glove-box row is listed in the source map for this system.",
+    )]
     return merged
 
 
@@ -2584,7 +2806,7 @@ def merge_common_ford_c34_source_facts(draft: dict[str, Any], source_text: str) 
         "Original redrawn lock-position map for Ford Interceptor mechanical decoding.",
         8,
         [
-            _position_row("Ignition", {1, 2, 3, 4, 5, 6, 7, 8}, 8),
+            _position_row("Ignition", {1, 3, 4, 5, 6, 7, 8}, 8),
             _position_row("Door", {3, 4, 5, 6, 7, 8}, 8),
             _position_row("Trunk / hatch", {3, 4, 5, 6, 7, 8}, 8),
             _position_row("Glove box", {4, 5, 6}, 8),
@@ -2687,8 +2909,14 @@ def merge_common_ford_x3_source_facts(draft: dict[str, Any], source_text: str) -
             "cut_to_cut": ".118",
             "air_bags": "No",
             "ignition_retainer": "n/a",
+            "spacing": {
+                "1": ".075", "2": ".164", "3": ".216", "4": ".310", "5": ".409",
+                "6": ".461", "7": ".545", "8": ".645", "9": ".744", "10": ".796",
+            },
+            "depths": {"1": ".323", "2": ".301", "3": ".278", "4": ".254"},
             "cutting_setup": {
                 "double_cuts": "Cuts 2, 4, and 7 are double cuts. Convert the source code pattern before cutting.",
+                "example": "Example: source code TX001 is 1112413; convert it to 111224133 before cutting.",
             },
         })
     transponder = merged.setdefault("transponder", {})
@@ -2709,6 +2937,20 @@ def merge_common_ford_x3_source_facts(draft: dict[str, Any], source_text: str) -
         {"tool": "EEZ Reader", "reference": "n/a"},
         {"tool": "Cobra", "reference": "n/a"},
     ]
+    merged["procedure_diagrams"] = [{
+        "title": "FC7 / FO-TX lock-position guide",
+        "placement": "making_key",
+        "caption": "Original redrawn double-cut map. Ignition and doors/trunk use the full 10-column sequence; repeated column labels show double cuts.",
+        "panels": [{
+            "label": "Lock positions",
+            "columns": ["1", "2", "2", "3", "4", "4", "5", "6", "7", "7"],
+            "rows": [
+                ["Ignition", *["filled"] * 10],
+                ["Doors & trunk", *["filled"] * 10],
+            ],
+            "note": "Cuts 2, 4, and 7 are double cuts; convert the source code pattern before cutting.",
+        }],
+    }]
     return merged
 
 
@@ -2911,6 +3153,7 @@ def is_informative_diagram(diagram: dict[str, Any]) -> bool:
             [str(position) for position in range(1, 8)],
             [str(position) for position in range(1, 9)],
             [str(position) for position in range(1, 11)],
+            ["1", "2", "2", "3", "4", "4", "5", "6", "7", "7"],
         ):
             continue
         column_count = len(columns)
@@ -3384,7 +3627,10 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
                 rows_complete = True
                 for label in expected_rows:
                     row = next((value for key, value in rows_by_label.items() if label in key), None)
-                    label_allows_empty = label == "GLOVE BOX" and "GLOVE BOX (NONE)" in source
+                    label_allows_empty = (
+                        (label == "GLOVE BOX" and "GLOVE BOX (NONE)" in source)
+                        or (label == "IGNITION" and "IGNITION (NONE)" in source)
+                    )
                     if (
                         not row
                         or len(row) != expected_row_length
@@ -3400,6 +3646,7 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
                     [str(position) for position in range(1, 8)],
                     [str(position) for position in range(1, 9)],
                     [str(position) for position in range(1, 11)],
+                    ["1", "2", "2", "3", "4", "4", "5", "6", "7", "7"],
                 ) and rows_complete:
                     has_lock_diagram = True
                     break

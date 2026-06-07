@@ -683,6 +683,7 @@ def has_usable_diagram_schema(schema: dict[str, Any]) -> bool:
             [str(position) for position in range(1, 8)],
             [str(position) for position in range(1, 9)],
             [str(position) for position in range(1, 11)],
+            ["1", "2", "2", "3", "4", "4", "5", "6", "7", "7"],
         ):
             column_count = len(columns)
             filled_by_row: list[int] = []
