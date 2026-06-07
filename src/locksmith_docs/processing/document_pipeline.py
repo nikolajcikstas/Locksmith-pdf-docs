@@ -22,7 +22,7 @@ from locksmith_docs.db.report_seed import ensure_bundled_parser_seed
 from locksmith_docs.db.repository import LocksmithRepository
 from locksmith_docs.processing.ai_text_cleaner import clean_page_with_ai
 from locksmith_docs.processing.job_status import has_running_job, update_job
-from locksmith_docs.reports.ai_report_cleaner import report_completeness_issues, report_quality_issues, require_report_ai_access, sanitize_structured_sections
+from locksmith_docs.reports.ai_report_cleaner import merge_source_supported_facts, report_completeness_issues, report_quality_issues, require_report_ai_access, sanitize_structured_sections
 from locksmith_docs.reports.build_drafts import import_to_database as import_report_drafts_to_database
 from locksmith_docs.reports.build_drafts import main as build_drafts_main
 from locksmith_docs.reports.build_drafts import report_is_publishable
@@ -399,8 +399,9 @@ def refresh_verified_output() -> dict[str, int]:
                 str(item.get("system_code") or ""),
                 verified_facts_path,
             )
-            item["draft"] = sanitize_structured_sections(item["draft"])
             raw_source = str((sections_by_code.get(item.get("system_code")) or {}).get("raw_text") or "")
+            item["draft"] = merge_source_supported_facts(item["draft"], raw_source)
+            item["draft"] = sanitize_structured_sections(item["draft"])
             issues = report_quality_issues(item["draft"]) + report_completeness_issues(item["draft"], raw_source)
             item["publication_issues"] = issues
             if issues:
