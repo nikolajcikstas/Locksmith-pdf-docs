@@ -282,6 +282,7 @@ def is_informative_diagram_schema(schema: Mapping[str, Any]) -> bool:
             [str(position) for position in range(1, 8)],
             [str(position) for position in range(1, 9)],
             [str(position) for position in range(1, 11)],
+            ["1", "2", "2", "3", "4", "4", "5", "6", "7", "7"],
         ):
             continue
         column_count = len(normalized_columns)
