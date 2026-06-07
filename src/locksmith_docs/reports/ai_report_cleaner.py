@@ -1863,6 +1863,7 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
     merged = merge_common_ford_d10_source_facts(merged, source_text)
     merged = merge_common_ford_x3_source_facts(merged, source_text)
     merged = merge_common_hk41_source_facts(merged, source_text)
+    merged = merge_common_hon_r15_source_facts(merged, source_text)
     merged = merge_common_nis31_source_facts(merged, source_text)
     return merged
 
@@ -3010,6 +3011,138 @@ def merge_common_hk41_source_facts(draft: dict[str, Any], source_text: str) -> d
     return merged
 
 
+def merge_common_hon_r15_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover Acura/Honda HON-R15 table values and correct spacing/depth ordering."""
+    source = re.sub(r"\s+", " ", source_text.upper())
+    code_matches = str(draft.get("code") or "").upper() == "HON-R15" or "HON-R15" in source
+    if not code_matches:
+        return draft
+    if str(draft.get("code") or "").upper() != "HON-R15" and not ("5001-8442" in source and "INTEGRA" in source and "HD103" in source):
+        return draft
+    merged = deepcopy(draft)
+    merged["code"] = "HON-R15"
+    merged["title"] = "1990-1999 Acura Integra / Legend / Vigor / NSX / TL / CL"
+    merged["system_type"] = "Mechanical key / remote reference"
+    merged["vehicle_applications"] = [
+        {"make": "Acura", "model": "CL", "year_from": 1997, "year_to": 1997},
+        {"make": "Acura", "model": "Integra", "year_from": 1990, "year_to": 1999},
+        {"make": "Acura", "model": "Legend", "year_from": 1990, "year_to": 1996},
+        {"make": "Acura", "model": "NSX", "year_from": 1991, "year_to": 1996},
+        {"make": "Acura", "model": "TL", "year_from": 1995, "year_to": 1998},
+        {"make": "Acura", "model": "Vigor", "year_from": 1991, "year_to": 1996},
+    ]
+    merged["job_essentials"] = {
+        "Code series": "5001-8442",
+        "Remote frequency": "434 MHz / 315 MHz depending on model",
+        "Transponder": "No transponder",
+        "Lishi / decoder": "HON 58R",
+        "Keyway": "HD103 / X214 / HOND16D",
+    }
+    merged["quick_answer"] = [
+        "This Acura reference is a mechanical-key/no-transponder system with model-specific remote fobs.",
+        "Use the HD103/X214 family key references and the CF74/XF74 card data when cutting the master key.",
+        "Only CL, Integra, and TL list remote applications on this source page; Legend, NSX, and Vigor list no remote application.",
+    ]
+    merged["decoders"] = [
+        {"tool": "Determinator", "reference": "HON 2"},
+        {"tool": "Lishi", "reference": "HON 58R"},
+        {"tool": "AccuReader", "reference": "n/a"},
+        {"tool": "EEZ Reader", "reference": "n/a"},
+        {"tool": "Cobra", "reference": "n/a"},
+    ]
+    merged["key_remote"] = {
+        "remote_type": "Remote fob where listed",
+        "known_options": [
+            {"years": "1997-1999", "models": "CL", "part": "72147-SY8-A03 / ILCO RKE-HON-4B5", "fcc_id": "A269ZUA108", "frequency": "434 MHz"},
+            {"years": "1996-2001", "models": "Integra", "part": "72147-S3Y-A01 / ILCO RKE-HON-4B5", "fcc_id": "A269ZUA108", "frequency": "434 MHz"},
+            {"years": "1990-1996", "models": "Legend", "notes": "No remote application listed."},
+            {"years": "1991-1996", "models": "NSX", "notes": "No remote application listed."},
+            {"years": "1996-1998", "models": "TL", "part": "72147-SZ5-A01", "fcc_id": "KOBUTAIT", "frequency": "315 MHz"},
+            {"years": "1991-1996", "models": "Vigor", "notes": "No remote application listed."},
+        ],
+    }
+    merged["mechanical_key"] = {
+        "code_series": "5001-8442",
+        "style": "Double-sided",
+        "card": "CF74 / XF74",
+        "itl": "510",
+        "macs": "4",
+        "start_cut": ".108",
+        "cut_to_cut": ".0845",
+        "air_bags": "Most",
+        "ignition_retainer": "Active",
+        "ilco_keyway": "HD103 / X214 / HOND16D / Strattec 692056",
+        "spacing": {
+            "1": ".108",
+            "2": ".192",
+            "3": ".277",
+            "4": ".361",
+            "5": ".446",
+            "6": ".530",
+            "7": ".615",
+            "8": ".699",
+        },
+        "depths": {
+            "1": ".307",
+            "2": ".294",
+            "3": ".282",
+            "4": ".269",
+            "5": ".257",
+            "6": ".244",
+        },
+        "cutting_setup": {
+            "HPC": "CF74 / XF74",
+            "Curtis Clipper": "Cam HD12X; carriage HD-12AX",
+            "Pak-A-Punch": "PAK-H1",
+            "ITL": "510",
+            "Dealer key": "35117-SL5-U01",
+        },
+    }
+    merged["transponder"] = {"transponder_type": "None", "chip": "No transponder", "test_key": "HD103"}
+    merged["programming"] = {"notes": ["No transponder programming is listed for this source page. Remote fob work is model-specific."]}
+    merged["making_key"] = {
+        "code_availability": "Code series 5001-8442 is listed.",
+        "methods": [
+            "Cut the mechanical key using the HD103/X214 family references and the listed spacing/depth table.",
+            "Use the listed cutting-machine setup for the machine in use, then test all mechanical locks.",
+            "For remote service, match the vehicle model to the listed fob part number and FCC/frequency; several applications list no remote.",
+        ],
+        "field_workflow": [
+            {"step": "Confirm application", "detail": "Match CL, Integra, Legend, NSX, TL, or Vigor to the correct year range."},
+            {"step": "Cut key", "detail": "Use code series 5001-8442, start cut .108, cut-to-cut .0845, and depths 1-6."},
+            {"step": "Check remote", "detail": "Only use the remote row for the exact model; Legend, NSX, and Vigor list no remote application."},
+            {"step": "Final test", "detail": "Test mechanical lock operation and remote operation where a remote is listed."},
+        ],
+        "field_notes": [
+            "This page is explicitly marked no transponder.",
+            "Air bags are listed as most; follow safe procedure around affected components.",
+            "Ignition retainer is listed as active.",
+        ],
+    }
+    merged["technician_checklist"] = {
+        "Verify before ordering": ["Vehicle model/year", "Remote part number if applicable", "FCC ID/frequency", "Keyway reference"],
+        "Bring to the job": ["HD103/X214-compatible key blank", "Appropriate cutter setup", "HON 58R / HON 2 reference"],
+        "Final tests": ["Mechanical key operation", "Remote lock/unlock only for listed remote applications"],
+    }
+    merged["source_facts"] = {
+        "Code series": ["5001-8442"],
+        "Frequencies": ["434 MHz", "315 MHz"],
+        "Part numbers": ["72147-SY8-A03", "72147-S3Y-A01", "72147-SZ5-A01"],
+        "FCC IDs": ["A269ZUA108", "KOBUTAIT"],
+        "Blades / keyways": ["HD103", "X214", "HOND16D", "692056", "35117-SL5-U01"],
+    }
+    merged["troubleshooting"] = [
+        {"issue": "Remote not listed for model", "action": "Do not force a remote workflow for Legend, NSX, or Vigor from this page; the source lists no remote application."},
+        {"issue": "Wrong cutting setup", "action": "Use the setup row for the actual cutting machine: HPC, Curtis, Pak-A-Punch, or ITL."},
+    ]
+    merged["warnings"] = [
+        "Verify exact remote application before ordering; several vehicles on this page list no remote.",
+        "Follow airbag safety procedure where applicable.",
+    ]
+    merged.pop("procedure_diagrams", None)
+    return merged
+
+
 def merge_common_nis31_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
     """Recover Infiniti NIS-31 table values and suppress OCR symbol drift in FCC/part numbers."""
     raw = re.sub(r"\s+", " ", source_text).upper()
@@ -3232,6 +3365,21 @@ def _is_descending_cut_table(table: dict[str, Any], required_count: int) -> bool
         except (KeyError, TypeError, ValueError):
             return False
     return all(values[index] > values[index + 1] for index in range(len(values) - 1))
+
+
+def _is_verified_ascending_spacing_table(draft: dict[str, Any], table: dict[str, Any], required_count: int) -> bool:
+    """Allow source-verified bow-to-tip spacing rows that increase across positions."""
+    if str(draft.get("code") or "").upper() not in {"HON-R15"}:
+        return False
+    if len(table) < required_count:
+        return False
+    values = []
+    for position in range(1, required_count + 1):
+        try:
+            values.append(float(str(table[str(position)]).strip()))
+        except (KeyError, TypeError, ValueError):
+            return False
+    return all(values[index] < values[index + 1] for index in range(len(values) - 1))
 
 
 def _is_valid_spacing_table(table: dict[str, Any], required_count: int) -> bool:
@@ -3623,7 +3771,7 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
             issues.append(
                 f"Source includes a {expected_spacing_count}-position spacing table, but only {len(spacing)} spacing positions are structured."
             )
-        elif not _is_descending_cut_table(spacing, expected_spacing_count):
+        elif not (_is_descending_cut_table(spacing, expected_spacing_count) or _is_verified_ascending_spacing_table(draft, spacing, expected_spacing_count)):
             issues.append("The source spacing table was captured, but the structured values are not in valid handle-to-tip order.")
     if source_has_depth_values(source_text):
         depths = mechanical.get("depths") if isinstance(mechanical.get("depths"), dict) else {}
@@ -3642,7 +3790,11 @@ def report_completeness_issues(draft: dict[str, Any], source_text: str) -> list[
             issues.append("The source depth table was captured, but the structured values are not in valid descending order.")
     if re.search(r"\bEIGHT\s+SPACES\b", source) and len(mechanical.get("spacing") or {}) < 8:
         issues.append("Source specifies eight spacing positions, but the structured spacing table is incomplete.")
-    if re.search(r"\bEIGHT\s+SPACES\b", source) and mechanical.get("spacing") and not _is_descending_cut_table(mechanical.get("spacing"), 8):
+    if (
+        re.search(r"\bEIGHT\s+SPACES\b", source)
+        and mechanical.get("spacing")
+        and not (_is_descending_cut_table(mechanical.get("spacing"), 8) or _is_verified_ascending_spacing_table(draft, mechanical.get("spacing"), 8))
+    ):
         issues.append("The eight-position spacing table is not in a valid handle-to-tip descending order.")
     if (
         mechanical.get("start_cut")

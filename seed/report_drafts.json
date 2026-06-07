@@ -3407,6 +3407,503 @@
     }
   },
   {
+    "system_code": "HK-41",
+    "source_document": "2021 AutoSmart ASIAN Book.pdf",
+    "source_pages": [
+      210,
+      210
+    ],
+    "confidence": 0.6,
+    "ai_verified": true,
+    "publication_issues": [],
+    "draft": {
+      "code": "HK-41",
+      "title": "2008-2014 Hyundai / Kia Remote Reference",
+      "decoders": [
+        {
+          "tool": "Lishi",
+          "reference": "HY22"
+        }
+      ],
+      "warnings": [
+        "Verify exact part numbers by VIN before ordering.",
+        "Confirm programmer support before connecting to the vehicle."
+      ],
+      "key_remote": {
+        "fcc_id": "OSLOKA-860T",
+        "frequency": "314 MHz / 315 MHz depending on part number",
+        "remote_type": "Remote head / remote fob depending on application",
+        "known_options": [
+          {
+            "part": "95430-2L300",
+            "notes": "Verify by VIN.",
+            "years": "2008-12",
+            "fcc_id": "PINHA-T008",
+            "models": "Elantra Touring",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "95430-2L350",
+            "notes": "Verify by VIN.",
+            "years": "2008-12",
+            "fcc_id": "PINHA-T008",
+            "models": "Elantra Touring",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "95430-2G202",
+            "notes": "Verify by VIN.",
+            "years": "2010",
+            "fcc_id": "OSLOKA-310T",
+            "models": "Optima",
+            "frequency": "314 MHz"
+          },
+          {
+            "part": "95430-2T000 / ILCO RKE-KIA-4B1",
+            "notes": "Verify by VIN.",
+            "years": "2011-13",
+            "fcc_id": "NYOSEKS-TF10ATX",
+            "models": "Optima",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "95430-1G000 / 95430-1G011",
+            "notes": "Verify by VIN.",
+            "years": "2010-11",
+            "fcc_id": "PLNHM-T002",
+            "models": "Rio",
+            "frequency": "314 MHz"
+          },
+          {
+            "part": "95430-1U012 / ILCO RKE-KIA-3B1",
+            "notes": "Verify by VIN.",
+            "years": "2010-12",
+            "fcc_id": "PINHA-T036",
+            "models": "Sorento",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "95430-2S201 / ILCO RKE-HYUN-3B1",
+            "notes": "Verify by VIN.",
+            "years": "2011-14",
+            "fcc_id": "OSLOKA-860T",
+            "models": "Tucson",
+            "frequency": "314 MHz"
+          }
+        ]
+      },
+      "making_key": {
+        "methods": [
+          "Verify keyway and system data, then decode an accessible lock or use the listed source method for the vehicle."
+        ],
+        "field_notes": [
+          "Match FCC ID, frequency, button count, and part number before programming or selling a remote.",
+          "PIN access is mentioned for this system; confirm the PIN workflow before connecting a programmer.",
+          "Airbag or retainer safety language is present; follow safe removal procedure before servicing lock components."
+        ],
+        "service_notes": [
+          "Use this system record as the job control sheet: verify vehicle identity, blade data, remote/FCC data, and programmer support before work begins.",
+          "For remote or proximity systems, verify FCC ID, frequency, button count, and part number before programming.",
+          "Check the transponder/chip section before choosing a reusable, clone, or program-new workflow.",
+          "PIN access is required or referenced; confirm the PIN source and programmer support before attempting programming."
+        ],
+        "field_workflow": [
+          {
+            "step": "Confirm vehicle match",
+            "detail": "Verify make, model, year, system code and trim before ordering parts."
+          },
+          {
+            "step": "Verify parts",
+            "detail": "Confirm FCC ID, frequency, button count and part number before programming."
+          },
+          {
+            "step": "Prepare access",
+            "detail": "Use a supported programmer for the exact vehicle. PIN access is required or mentioned."
+          },
+          {
+            "step": "Create mechanical key",
+            "detail": "Use approved blade, spacing, depths and decoder data from this report."
+          },
+          {
+            "step": "Program and test",
+            "detail": "Program the remote/transponder and test every customer-facing function before release."
+          }
+        ],
+        "code_availability": "Use the listed code series when a valid code is available; verify exact keyway and lock set by VIN because the source notes factory variation on a few models."
+      },
+      "programming": {
+        "cloning": "Not specified",
+        "pin_guidance": "Not specified",
+        "pin_required": "Yes",
+        "tool_guidance": "Not specified",
+        "system_requirement": "Not specified"
+      },
+      "system_type": "Remote fob reference",
+      "transponder": {
+        "chip": "No transponder listed on this source page",
+        "reusable": "n/a",
+        "test_key": "Not specified",
+        "transponder_type": "None"
+      },
+      "quick_answer": [
+        "FCC ID detected: OSLOKA-860T.",
+        "PIN access appears to be required or mentioned for this system.",
+        "Use the sections below to verify blade, FCC/frequency, programming path, decoder references, and final tests before releasing the vehicle."
+      ],
+      "source_facts": {
+        "FCC IDs": [
+          "OSLOKA-3I0T",
+          "OSLOKA-860T",
+          "PINHA-T008",
+          "PINHA-T036",
+          "PINHA-TO08",
+          "PLNHM-T002"
+        ],
+        "Frequencies": [
+          "315 MHz"
+        ],
+        "Part numbers": [
+          "95430-10000",
+          "95430-16000",
+          "95430-16012",
+          "95430-21300",
+          "95430-21350",
+          "95430-26202",
+          "95430-28201"
+        ],
+        "Blades / keyways": [
+          "TOY48"
+        ]
+      },
+      "job_essentials": {
+        "PIN": "Required",
+        "FCC ID": "OSLOKA-860T",
+        "Frequency": "315 MHz",
+        "Lishi / decoder": "Check source pages",
+        "Programming path": "Use a supported programmer for the exact vehicle. PIN access is required or mentioned."
+      },
+      "mechanical_key": {
+        "itl": "110",
+        "card": "TOY48",
+        "style": "High Security",
+        "milling": "nfa",
+        "air_bags": "Yes",
+        "start_cut": "n/a",
+        "cut_to_cut": "n/a",
+        "itl_number": "n/a",
+        "code_series": "HK1-HK2500 / K1-K2500",
+        "ilco_keyway": "TOY48",
+        "ignition_retainer": "Active"
+      },
+      "source_coverage": [
+        "Source coverage: pages 210-210."
+      ],
+      "troubleshooting": [
+        {
+          "issue": "Vehicle or trim mismatch",
+          "action": "Confirm make, model, year, system code, FCC/frequency, and VIN-based part fitment before ordering or programming."
+        },
+        {
+          "issue": "PIN access required",
+          "action": "Obtain or calculate the correct PIN before programming; stop if the tool cannot support the PIN workflow for this vehicle."
+        },
+        {
+          "issue": "Column or lock removal risk",
+          "action": "Follow airbag and retainer safety steps before removing ignition or column components."
+        }
+      ],
+      "technician_checklist": {
+        "Final tests": [
+          "Mechanical key operation",
+          "Remote lock/unlock",
+          "Start authorization",
+          "Trunk/remote start if equipped"
+        ],
+        "Bring to the job": [
+          "Supported programmer",
+          "Correct blade/keyway",
+          "PIN access if required"
+        ],
+        "Verify before ordering": [
+          "VIN-based part number",
+          "FCC ID",
+          "Frequency",
+          "Chip/transponder type"
+        ]
+      },
+      "vehicle_applications": [
+        {
+          "make": "Hyundai",
+          "model": "Elantra Touring",
+          "year_to": 2012,
+          "year_from": 2008
+        },
+        {
+          "make": "Hyundai",
+          "model": "Tucson",
+          "year_to": 2014,
+          "year_from": 2011
+        },
+        {
+          "make": "Kia",
+          "model": "Optima",
+          "year_to": 2013,
+          "year_from": 2010
+        },
+        {
+          "make": "Kia",
+          "model": "Rio",
+          "year_to": 2011,
+          "year_from": 2010
+        },
+        {
+          "make": "Kia",
+          "model": "Sorento",
+          "year_to": 2012,
+          "year_from": 2010
+        }
+      ]
+    }
+  },
+  {
+    "system_code": "HON-R15",
+    "source_document": "2021 AutoSmart ASIAN Book.pdf",
+    "source_pages": [
+      80,
+      80
+    ],
+    "confidence": 0.6,
+    "ai_verified": true,
+    "publication_issues": [],
+    "draft": {
+      "code": "HON-R15",
+      "title": "1990-1999 Acura CL / Integra / Legend / NSX +",
+      "decoders": [
+        {
+          "tool": "Determinator",
+          "reference": "HON 2"
+        },
+        {
+          "tool": "Lishi",
+          "reference": "HON 58R"
+        }
+      ],
+      "warnings": [
+        "Verify exact remote application before ordering; several vehicles on this page list no remote.",
+        "Follow airbag safety procedure where applicable."
+      ],
+      "key_remote": {
+        "remote_type": "Remote fob where listed",
+        "known_options": [
+          {
+            "part": "72147-SY8-A03 / ILCO RKE-HON-4B5",
+            "years": "1997-1999",
+            "fcc_id": "A269ZUA108",
+            "models": "CL",
+            "frequency": "434 MHz"
+          },
+          {
+            "part": "72147-S3Y-A01 / ILCO RKE-HON-4B5",
+            "years": "1996-2001",
+            "fcc_id": "A269ZUA108",
+            "models": "Integra",
+            "frequency": "434 MHz"
+          },
+          {
+            "part": "72147-SZ5-A01",
+            "years": "1996-1998",
+            "fcc_id": "KOBUTAIT",
+            "models": "TL",
+            "frequency": "315 MHz"
+          }
+        ]
+      },
+      "making_key": {
+        "methods": [
+          "Cut the mechanical key using the HD103/X214 family references and the listed spacing/depth table.",
+          "Use the listed cutting-machine setup for the machine in use, then test all mechanical locks.",
+          "For remote service, match the vehicle model to the listed fob part number and FCC/frequency; several applications list no remote."
+        ],
+        "field_notes": [
+          "This page is explicitly marked no transponder.",
+          "Air bags are listed as most; follow safe procedure around affected components.",
+          "Ignition retainer is listed as active."
+        ],
+        "field_workflow": [
+          {
+            "step": "Confirm application",
+            "detail": "Match CL, Integra, Legend, NSX, TL, or Vigor to the correct year range."
+          },
+          {
+            "step": "Cut key",
+            "detail": "Use code series 5001-8442, start cut .108, cut-to-cut .0845, and depths 1-6."
+          },
+          {
+            "step": "Check remote",
+            "detail": "Only use the remote row for the exact model; Legend, NSX, and Vigor list no remote application."
+          },
+          {
+            "step": "Final test",
+            "detail": "Test mechanical lock operation and remote operation where a remote is listed."
+          }
+        ],
+        "code_availability": "Code series 5001-8442 is listed."
+      },
+      "programming": {
+        "notes": [
+          "No transponder programming is listed for this source page. Remote fob work is model-specific."
+        ]
+      },
+      "system_type": "Mechanical key / remote reference",
+      "transponder": {
+        "chip": "No transponder",
+        "test_key": "HD103",
+        "transponder_type": "None"
+      },
+      "quick_answer": [
+        "This Acura reference is a mechanical-key/no-transponder system with model-specific remote fobs.",
+        "Use the HD103/X214 family key references and the CF74/XF74 card data when cutting the master key.",
+        "Only CL, Integra, and TL list remote applications on this source page; Legend, NSX, and Vigor list no remote application."
+      ],
+      "source_facts": {
+        "FCC IDs": [
+          "A269ZUA108",
+          "KOBUTAIT"
+        ],
+        "Code series": [
+          "5001-8442"
+        ],
+        "Frequencies": [
+          "434 MHz",
+          "315 MHz"
+        ],
+        "Part numbers": [
+          "72147-SY8-A03",
+          "72147-S3Y-A01",
+          "72147-SZ5-A01"
+        ],
+        "Blades / keyways": [
+          "HD103",
+          "X214",
+          "HOND16D",
+          "692056",
+          "35117-SL5-U01"
+        ]
+      },
+      "job_essentials": {
+        "Keyway": "HD103 / X214 / HOND16D",
+        "Code series": "5001-8442",
+        "Transponder": "No transponder",
+        "Lishi / decoder": "HON 58R",
+        "Remote frequency": "434 MHz / 315 MHz depending on model"
+      },
+      "mechanical_key": {
+        "itl": "510",
+        "card": "CF74 / XF74",
+        "macs": "4",
+        "style": "Double-sided",
+        "depths": {
+          "1": ".307",
+          "2": ".294",
+          "3": ".282",
+          "4": ".269",
+          "5": ".257",
+          "6": ".244"
+        },
+        "spacing": {
+          "1": ".108",
+          "2": ".192",
+          "3": ".277",
+          "4": ".361",
+          "5": ".446",
+          "6": ".530",
+          "7": ".615",
+          "8": ".699"
+        },
+        "air_bags": "Most",
+        "start_cut": ".108",
+        "code_series": "5001-8442",
+        "ilco_keyway": "HD103 / X214 / HOND16D / Strattec 692056",
+        "cutting_setup": {
+          "HPC": "CF74 / XF74",
+          "ITL": "510",
+          "Dealer key": "35117-SL5-U01",
+          "Pak-A-Punch": "PAK-H1",
+          "Curtis Clipper": "Cam HD12X; carriage HD-12AX"
+        },
+        "ignition_retainer": "Active"
+      },
+      "source_coverage": [
+        "Source coverage: pages 80-80."
+      ],
+      "troubleshooting": [
+        {
+          "issue": "Remote not listed for model",
+          "action": "Do not force a remote workflow for Legend, NSX, or Vigor from this page; the source lists no remote application."
+        },
+        {
+          "issue": "Wrong cutting setup",
+          "action": "Use the setup row for the actual cutting machine: HPC, Curtis, Pak-A-Punch, or ITL."
+        }
+      ],
+      "technician_checklist": {
+        "Final tests": [
+          "Mechanical key operation",
+          "Remote lock/unlock only for listed remote applications"
+        ],
+        "Bring to the job": [
+          "HD103/X214-compatible key blank",
+          "Appropriate cutter setup",
+          "HON 58R / HON 2 reference"
+        ],
+        "Verify before ordering": [
+          "Vehicle model/year",
+          "Remote part number if applicable",
+          "FCC ID/frequency",
+          "Keyway reference"
+        ]
+      },
+      "vehicle_applications": [
+        {
+          "make": "Acura",
+          "model": "CL",
+          "year_to": 1997,
+          "year_from": 1997
+        },
+        {
+          "make": "Acura",
+          "model": "Integra",
+          "year_to": 1999,
+          "year_from": 1990
+        },
+        {
+          "make": "Acura",
+          "model": "Legend",
+          "year_to": 1996,
+          "year_from": 1990
+        },
+        {
+          "make": "Acura",
+          "model": "NSX",
+          "year_to": 1996,
+          "year_from": 1991
+        },
+        {
+          "make": "Acura",
+          "model": "TL",
+          "year_to": 1998,
+          "year_from": 1995
+        },
+        {
+          "make": "Acura",
+          "model": "Vigor",
+          "year_to": 1996,
+          "year_from": 1991
+        }
+      ]
+    }
+  },
+  {
     "system_code": "NIS-31",
     "source_document": "2021 AutoSmart ASIAN Book.pdf",
     "source_pages": [
