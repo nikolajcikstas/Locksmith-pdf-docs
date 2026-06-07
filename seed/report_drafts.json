@@ -1593,7 +1593,7 @@
       ],
       "procedure_diagrams": [
         {
-          "title": "Mechanical Key Lock Positions",
+          "title": "HU66A-P lock-position guide",
           "panels": [
             {
               "note": "* Glove box position map applies only when equipped.",
@@ -1622,12 +1622,12 @@
                 ],
                 [
                   "Glove box",
-                  "filled",
-                  "filled",
-                  "filled",
                   "",
                   "",
                   "",
+                  "filled",
+                  "filled",
+                  "filled",
                   "",
                   ""
                 ]
@@ -1645,7 +1645,7 @@
               ]
             }
           ],
-          "caption": "HU66 position guide redrawn from verified operational data. Filled markers show which cut positions each lock uses.",
+          "caption": "Original redrawn HU66A-P position map. Ignition and door/trunk/hatch use positions 1-8; glove box uses positions 4-6 when equipped.",
           "placement": "making_key",
           "key_orientation": "bow_left_tip_right"
         }

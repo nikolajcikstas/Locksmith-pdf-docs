@@ -1425,6 +1425,7 @@ def sanitize_structured_sections(draft: dict[str, Any]) -> dict[str, Any]:
             normalized["panels"] = panels
             if is_informative_diagram(normalized):
                 normalized_diagrams.append(normalized)
+        enforce_verified_diagram_positions(cleaned, normalized_diagrams)
         cleaned["procedure_diagrams"] = normalized_diagrams
         _sync_mechanical_tables_from_diagrams(cleaned, normalized_diagrams)
     elif diagrams is not None:
@@ -1592,6 +1593,38 @@ def normalize_diagram_rows(raw_rows: Any, columns: list[str]) -> list[list[str]]
     return normalized
 
 
+def enforce_verified_diagram_positions(draft: dict[str, Any], diagrams: list[dict[str, Any]]) -> None:
+    """Keep source-verified lock-position maps from being distorted by broad cleanup rules."""
+    if str(draft.get("code") or "").upper() != "AV-8":
+        return
+    mechanical = draft.get("mechanical_key") if isinstance(draft.get("mechanical_key"), dict) else {}
+    keyway = str(mechanical.get("ilco_keyway") or mechanical.get("test_key") or "").upper()
+    if "HU66" not in keyway:
+        return
+    for diagram in diagrams:
+        title = str(diagram.get("title") or "").upper()
+        caption = str(diagram.get("caption") or "").upper()
+        if "LOCK-POSITION" not in f"{title} {caption}":
+            continue
+        panels = diagram.get("panels") if isinstance(diagram.get("panels"), list) else []
+        for panel in panels:
+            if not isinstance(panel, dict):
+                continue
+            columns = [str(value).strip() for value in panel.get("columns", [])]
+            if columns != [str(position) for position in range(1, 9)]:
+                continue
+            rows = panel.get("rows") if isinstance(panel.get("rows"), list) else []
+            for index, row in enumerate(rows):
+                if not (isinstance(row, list) and row):
+                    continue
+                if "GLOVE" in str(row[0]).upper():
+                    rows[index] = _position_row(str(row[0]), {4, 5, 6}, 8)
+                elif "IGNITION" in str(row[0]).upper():
+                    rows[index] = _position_row(str(row[0]), set(range(1, 9)), 8)
+                elif any(token in str(row[0]).upper() for token in ("DOOR", "TRUNK", "HATCH")):
+                    rows[index] = _position_row(str(row[0]), set(range(1, 9)), 8)
+
+
 def merge_reliable_extracted_facts(cleaned: dict[str, Any], source_draft: dict[str, Any]) -> dict[str, Any]:
     """Keep deterministic identifiers that were already parsed before narrative rewriting."""
     merged = deepcopy(cleaned)
@@ -1753,6 +1786,7 @@ def merge_source_supported_facts(draft: dict[str, Any], source_text: str) -> dic
             mechanical.pop("ignition_retainer", None)
     merged = merge_common_gm_proximity_source_facts(merged, source_text)
     merged = merge_common_acu_s5_source_facts(merged, source_text)
+    merged = merge_common_av8_source_facts(merged, source_text)
     merged = merge_common_av10_source_facts(merged, source_text)
     merged = merge_common_vw_av4_source_facts(merged, source_text)
     merged = merge_common_bmw2_source_facts(merged, source_text)
@@ -1971,6 +2005,122 @@ def merge_common_acu_s5_source_facts(draft: dict[str, Any], source_text: str) ->
         "Verify the exact proximity fob by VIN and trim level before ordering.",
         "Confirm PIN and programmer support before connecting to the vehicle.",
         "Use the correct master/valet depth rule at position 5 when manually cutting HON66.",
+    ]))
+    return merged
+
+
+def merge_common_av8_source_facts(draft: dict[str, Any], source_text: str) -> dict[str, Any]:
+    """Recover the Audi AV-8 A3/Q3 data and the exact HU66 lock-position map."""
+    if str(draft.get("code") or "").upper() != "AV-8":
+        return draft
+    source = re.sub(r"\s+", " ", source_text.upper())
+    if not ("AV-8" in source and "A3" in source and "Q3" in source and ("HU66" in source or "HUGG" in source)):
+        return draft
+    merged = deepcopy(draft)
+    merged["title"] = "2015-2021 Audi A3 / Q3"
+    merged["system_type"] = "Remote / proximity-capable key system"
+    merged["vehicle_applications"] = [
+        {"make": "Audi", "model": "A3", "year_from": 2015, "year_to": 2021},
+        {"make": "Audi", "model": "Q3", "year_from": 2015, "year_to": 2021},
+    ]
+    remote = merged.setdefault("key_remote", {})
+    if isinstance(remote, dict):
+        remote.update({
+            "remote_type": "Remote fob; verify KESSY/proximity equipment by VIN",
+            "frequency": "315 MHz",
+            "known_options": [
+                {
+                    "years": "2015-19",
+                    "models": "Audi A3 / Q3",
+                    "part": "8V0 837 220 E",
+                    "fcc_id": "NBGFS12P71",
+                    "frequency": "315 MHz",
+                    "notes": "Verify by VIN and equipment.",
+                },
+                {
+                    "years": "2015-18",
+                    "models": "Audi A3 / Q3",
+                    "part": "8X0 837 220 A",
+                    "fcc_id": "NBGFS12P71",
+                    "frequency": "315 MHz",
+                    "notes": "Verify by VIN and equipment.",
+                },
+            ],
+        })
+    mechanical = merged.setdefault("mechanical_key", {})
+    if isinstance(mechanical, dict):
+        mechanical.update({
+            "code_series": "1-8110",
+            "style": "High Security",
+            "card": "n/a",
+            "ilco_keyway": "HU66A-P",
+            "test_key": "HU66A-P",
+            "macs": "4",
+            "start_cut": "n/a",
+            "cut_to_cut": "n/a",
+            "air_bags": "Yes",
+            "ignition_retainer": "Spring",
+            "milling": "Internal milling",
+            "spacing": {
+                "1": ".945", "2": ".827", "3": ".709", "4": ".591",
+                "5": ".472", "6": ".354", "7": ".236", "8": ".118",
+            },
+            "depths": {"1": ".150", "2": ".126", "3": ".102", "4": ".079"},
+            "cutting_setup": {
+                "cut_track": "The left track contains the cuts.",
+                "guide_track": "The right track is used only as a guide/clearance track.",
+                "preparation": "Pre-cut the left track to number-one depth at all positions so the guide track has clearance in the locks.",
+            },
+        })
+    transponder = merged.setdefault("transponder", {})
+    if isinstance(transponder, dict):
+        transponder.update({
+            "transponder_type": "Dealer transponder system",
+            "chip": "Integrated remote/transponder electronics",
+            "reusable": "Verify by part and programming path",
+            "test_key": "HU66A-P",
+        })
+    programming = merged.setdefault("programming", {})
+    if isinstance(programming, dict):
+        programming.update({
+            "pin_required": "Yes",
+            "pin_guidance": "PIN access is required; the source notes that aftermarket PIN reading is not guaranteed.",
+            "system_requirement": "Use a supported key programmer or EEPROM-capable workflow for the exact vehicle equipment.",
+        })
+    making_key = merged.setdefault("making_key", {})
+    if isinstance(making_key, dict):
+        making_key["code_availability"] = "No codes on any locks are listed; decode an accessible cylinder to produce a working key."
+        making_key["methods"] = [
+            "Use a HU66-compatible lock reader/decoder in the door lock to determine the cuts for a complete working key.",
+            "Alternatively, disassemble the door cylinder and decode the tumblers. This HU66 system uses eight spaces and four depths; a key made to the door lock provides a complete working key.",
+        ]
+        making_key["service_notes"] = [
+            "Read positions from the handle toward the tip.",
+            "The lock-position map lists ignition positions 1-8 and door/trunk/hatch positions 1-8.",
+            "When a glove-box lock is equipped, the source map lists glove-box positions 4, 5 and 6 only.",
+        ]
+    merged["decoders"] = [
+        {"tool": "Determinator", "reference": "n/a"},
+        {"tool": "Lishi", "reference": "HU66 v2"},
+        {"tool": "AccuReader", "reference": "n/a"},
+        {"tool": "EEZ Reader", "reference": "n/a"},
+        {"tool": "Cobra", "reference": "n/a"},
+    ]
+    merged["procedure_diagrams"] = [_lock_position_diagram(
+        "HU66A-P lock-position guide",
+        "Original redrawn HU66A-P position map. Ignition and door/trunk/hatch use positions 1-8; glove box uses positions 4-6 when equipped.",
+        8,
+        [
+            _position_row("Ignition", {1, 2, 3, 4, 5, 6, 7, 8}, 8),
+            _position_row("Doors / trunk / hatch", {1, 2, 3, 4, 5, 6, 7, 8}, 8),
+            _position_row("Glove box", {4, 5, 6}, 8),
+        ],
+        "* Glove box position map applies only when equipped.",
+    )]
+    merged["warnings"] = list(dict.fromkeys([
+        *(merged.get("warnings") if isinstance(merged.get("warnings"), list) else []),
+        "Verify the exact remote part number and KESSY/proximity equipment by VIN before ordering.",
+        "Confirm programmer and PIN-read support before connecting to the vehicle.",
     ]))
     return merged
 
