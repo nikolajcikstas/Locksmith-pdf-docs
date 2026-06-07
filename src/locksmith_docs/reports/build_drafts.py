@@ -175,7 +175,7 @@ def build_drafts(
             and has_safe_source_span(section)
         ],
         key=lambda section: (
-            str(section.get("code") or "") not in prior_problem_codes,
+            str(section.get("code") or "") in prior_problem_codes,
             -section_application_confidence(section),
             int(section.get("page_end") or section.get("page_start") or 0) - int(section.get("page_start") or 0),
             str(section.get("code") or ""),
