@@ -370,6 +370,391 @@
     }
   },
   {
+    "system_code": "AV-3",
+    "source_document": "Audi-VW-Porsche.pdf",
+    "source_pages": [
+      10,
+      10
+    ],
+    "confidence": 0.6,
+    "ai_verified": true,
+    "publication_issues": [],
+    "draft": {
+      "code": "AV-3",
+      "title": "1981-1998 Porsche 911",
+      "warnings": [
+        "Verify exact part numbers by VIN before ordering.",
+        "Confirm programmer support before connecting to the vehicle."
+      ],
+      "key_remote": {
+        "remote_type": "Key"
+      },
+      "making_key": {
+        "methods": [
+          "Method 1: Check the owner's manual for a dealer-written key code.",
+          "Method 2: Check the door lock for a stamped key code.",
+          "Method 3: Impression the locks.",
+          "Method 5: Disassemble the door lock to make the key."
+        ],
+        "code_availability": "Many of the door locks on older models have a code stamped on them."
+      },
+      "field_notes": [
+        "VIN or dealer verification is mentioned; verify fitment before ordering key, fob, or proximity parts.",
+        "A lock reader/decoder path is available or referenced; use the listed decoder data before removing parts.",
+        "Door lock/cylinder information is relevant for making a working mechanical key.",
+        "Airbag or retainer safety language is present; follow safe removal procedure before servicing lock components."
+      ],
+      "programming": {
+        "cloning": "n/a",
+        "factory_tool": "n/a",
+        "pin_guidance": "n/a",
+        "tool_guidance": "n/a",
+        "system_requirement": "n/a"
+      },
+      "system_type": "Key",
+      "transponder": {
+        "chip": "n/a",
+        "reusable": "n/a",
+        "test_key": "n/a",
+        "transponder_type": "n/a"
+      },
+      "quick_answer": [
+        "Use the sections below to verify blade, FCC/frequency, programming path, decoder references, and final tests before releasing the vehicle."
+      ],
+      "service_notes": [
+        "Use this system record as the job control sheet: verify vehicle identity, blade data, remote/FCC data, and programmer support before work begins.",
+        "Use the spacing/depth data in the mechanical key section when cutting the blade; do not rely on screenshot tables.",
+        "Dealer or VIN verification is referenced; confirm exact part fitment before ordering.",
+        "When all keys are lost, decode the door lock/cylinder or use the listed lock reader path to recover cuts."
+      ],
+      "field_workflow": [
+        {
+          "step": "Confirm vehicle match",
+          "detail": "Verify make, model, year, system code and trim before ordering parts."
+        },
+        {
+          "step": "Verify parts",
+          "detail": "Confirm FCC ID, frequency, button count and part number before programming."
+        },
+        {
+          "step": "Prepare access",
+          "detail": "Use a supported programmer for the exact vehicle."
+        },
+        {
+          "step": "Create mechanical key",
+          "detail": "Use approved blade, spacing, depths and decoder data from this report."
+        },
+        {
+          "step": "Program and test",
+          "detail": "Program the remote/transponder and test every customer-facing function before release."
+        }
+      ],
+      "job_essentials": {
+        "Lishi / decoder": "Check source pages",
+        "Programming path": "Use a supported programmer for the exact vehicle."
+      },
+      "mechanical_key": {
+        "itl": "36",
+        "macs": "2",
+        "style": "Dbl Sided",
+        "air_bags": "No",
+        "start_cut": ".118",
+        "cut_to_cut": ".079",
+        "code_series": "NC 1-208",
+        "cutting_setup": {
+          "Pak-A-Punch": "Verify exact setup on source page during review.",
+          "Curtis Clipper": "Verify exact setup on source page during review."
+        },
+        "ignition_retainer": "Spring"
+      },
+      "source_coverage": [
+        "Source coverage: pages 10-10."
+      ],
+      "troubleshooting": [
+        {
+          "issue": "Vehicle or trim mismatch",
+          "action": "Confirm make, model, year, system code, FCC/frequency, and VIN-based part fitment before ordering or programming."
+        },
+        {
+          "issue": "Part number uncertainty",
+          "action": "Verify the remote or proximity fob by VIN when the source indicates dealer/VIN confirmation."
+        },
+        {
+          "issue": "Column or lock removal risk",
+          "action": "Follow airbag and retainer safety steps before removing ignition or column components."
+        }
+      ],
+      "procedure_diagrams": [
+        {
+          "title": "Lock Positions",
+          "panels": [
+            {
+              "rows": [
+                [
+                  "Ignition",
+                  "filled",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "Doors / trunk / hatch",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "Glove box",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              ],
+              "label": "Lock positions",
+              "columns": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8"
+              ]
+            }
+          ],
+          "caption": "Key cut positions for various locks.",
+          "placement": "making_key"
+        }
+      ],
+      "technician_checklist": {
+        "Final tests": [
+          "Mechanical key operation",
+          "Remote lock/unlock",
+          "Start authorization",
+          "Trunk/remote start if equipped"
+        ],
+        "Bring to the job": [
+          "Supported programmer",
+          "Correct blade/keyway",
+          "PIN access if required"
+        ],
+        "Verify before ordering": [
+          "VIN-based part number",
+          "FCC ID",
+          "Frequency",
+          "Chip/transponder type"
+        ]
+      },
+      "vehicle_applications": [
+        {
+          "make": "Porsche",
+          "model": "911",
+          "year_to": 1998,
+          "year_from": 1981
+        }
+      ]
+    }
+  },
+  {
+    "system_code": "AV-4",
+    "source_document": "Audi-VW-Porsche.pdf",
+    "source_pages": [
+      11,
+      11
+    ],
+    "confidence": 0.6,
+    "ai_verified": true,
+    "publication_issues": [],
+    "draft": {
+      "code": "AV-4",
+      "title": "1966-1978 Volkswagen Beetle / Bus",
+      "decoders": [],
+      "warnings": [
+        "Verify exact part numbers by VIN before ordering.",
+        "Confirm programmer support before connecting to the vehicle."
+      ],
+      "key_remote": {
+        "remote_type": "Key"
+      },
+      "making_key": {
+        "methods": [
+          "Method 1: Check the owner's manual for a dealer-written key code.",
+          "Method 2: Remove or pull out the handle/lock far enough to read the stamped code on the handle housing; if the code cannot be read, remove the handle/lock assembly and decode the tumblers.",
+          "Method 3: Impression the locks.",
+          "Method 4: If needed, remove the spring-retained ignition cylinder and either read the stamped code or disassemble it to make a working key; protect the turn-signal assembly while accessing the cylinder."
+        ],
+        "code_availability": "Many older door locks have a stamped code; use the key code when it is available."
+      },
+      "field_notes": [
+        "VIN or dealer verification is mentioned; verify fitment before ordering key, fob, or proximity parts.",
+        "A lock reader/decoder path is available or referenced; use the listed decoder data before removing parts.",
+        "Door lock/cylinder information is relevant for making a working mechanical key.",
+        "Airbag or retainer safety language is present; follow safe removal procedure before servicing lock components."
+      ],
+      "programming": {
+        "cloning": "n/a",
+        "factory_tool": "n/a",
+        "pin_guidance": "n/a",
+        "pin_required": "n/a",
+        "tool_guidance": "n/a",
+        "system_requirement": "n/a"
+      },
+      "system_type": "Key",
+      "transponder": {
+        "chip": "No transponder",
+        "reusable": "n/a",
+        "test_key": "n/a",
+        "transponder_type": "None"
+      },
+      "quick_answer": [
+        "Use the sections below to verify blade, FCC/frequency, programming path, decoder references, and final tests before releasing the vehicle."
+      ],
+      "service_notes": [
+        "Use this system record as the job control sheet: verify vehicle identity, blade data, remote/FCC data, and programmer support before work begins.",
+        "Use the spacing/depth data in the mechanical key section when cutting the blade; do not rely on screenshot tables.",
+        "Dealer or VIN verification is referenced; confirm exact part fitment before ordering.",
+        "When all keys are lost, decode the door lock/cylinder or use the listed lock reader path to recover cuts.",
+        "Lock part availability is mentioned; verify lock, cylinder, and pin-kit information before parts ordering."
+      ],
+      "field_workflow": [
+        {
+          "step": "Confirm vehicle match",
+          "detail": "Verify make, model, year, system code and trim before ordering parts."
+        },
+        {
+          "step": "Verify parts",
+          "detail": "Confirm FCC ID, frequency, button count and part number before programming."
+        },
+        {
+          "step": "Prepare access",
+          "detail": "Use a supported programmer for the exact vehicle."
+        },
+        {
+          "step": "Create mechanical key",
+          "detail": "Use approved blade, spacing, depths and decoder data from this report."
+        },
+        {
+          "step": "Program and test",
+          "detail": "Program the remote/transponder and test every customer-facing function before release."
+        }
+      ],
+      "job_essentials": {
+        "Lishi / decoder": "Check source pages",
+        "Programming path": "Use a supported programmer for the exact vehicle."
+      },
+      "mechanical_key": {
+        "card": "CF3 / CF4",
+        "macs": "3",
+        "style": "Double-sided",
+        "depths": {
+          "1": ".260",
+          "2": ".237",
+          "3": ".216",
+          "4": ".192"
+        },
+        "milling": "Plain side and shoulder side spacing",
+        "spacing": {
+          "1": ".100",
+          "2": ".260",
+          "3": ".420",
+          "4": ".580",
+          "5": ".740",
+          "6": ".180",
+          "7": ".340",
+          "8": ".500",
+          "9": ".600",
+          "10": ".820"
+        },
+        "air_bags": "No",
+        "start_cut": "Varies",
+        "cut_to_cut": "Varies",
+        "itl_number": "444/445 or 356/357 depending on application",
+        "code_series": "11K001-72K110 / 11M001-72M110 / 11R001-72R110",
+        "ilco_keyway": "VW71 / V27 / VW67S",
+        "cutting_setup": {
+          "hpc": "CF3 / XF3",
+          "itl": "445 shoulder side / 444 plain side",
+          "plain_side": "Positions 1-5 use .100, .260, .420, .580, .740 from bow to tip.",
+          "shoulder_side": "Positions 6-10 use .180, .340, .500, .600, .820 from bow to tip.",
+          "curtis_clipper": "Cam VW-4, carriage VW-4A",
+          "application_notes": "1970-78 Beetle and 1966-70 Beetle list cut-to-cut .160; 1966-70 Bus lists start cut .106 and variable cut-to-cut."
+        },
+        "ignition_retainer": "Spring"
+      },
+      "source_coverage": [
+        "Source coverage: pages 11-11."
+      ],
+      "troubleshooting": [
+        {
+          "issue": "Vehicle or trim mismatch",
+          "action": "Confirm make, model, year, system code, FCC/frequency, and VIN-based part fitment before ordering or programming."
+        },
+        {
+          "issue": "Part number uncertainty",
+          "action": "Verify the remote or proximity fob by VIN when the source indicates dealer/VIN confirmation."
+        },
+        {
+          "issue": "Column or lock removal risk",
+          "action": "Follow airbag and retainer safety steps before removing ignition or column components."
+        }
+      ],
+      "technician_checklist": {
+        "Final tests": [
+          "Mechanical key operation",
+          "Remote lock/unlock",
+          "Start authorization",
+          "Trunk/remote start if equipped"
+        ],
+        "Bring to the job": [
+          "Supported programmer",
+          "Correct blade/keyway",
+          "PIN access if required"
+        ],
+        "Verify before ordering": [
+          "VIN-based part number",
+          "FCC ID",
+          "Frequency",
+          "Chip/transponder type"
+        ]
+      },
+      "vehicle_applications": [
+        {
+          "make": "Volkswagen",
+          "model": "Beetle",
+          "year_to": 1978,
+          "year_from": 1970
+        },
+        {
+          "make": "Volkswagen",
+          "model": "Beetle",
+          "year_to": 1970,
+          "year_from": 1966
+        },
+        {
+          "make": "Volkswagen",
+          "model": "Bus",
+          "year_to": 1970,
+          "year_from": 1966
+        }
+      ]
+    }
+  },
+  {
     "system_code": "AV-8",
     "source_document": "Audi-VW-Porsche.pdf",
     "source_pages": [
@@ -669,6 +1054,207 @@
     }
   },
   {
+    "system_code": "BMW-2",
+    "source_document": "BMW-Mini.pdf",
+    "source_pages": [
+      8,
+      8
+    ],
+    "confidence": 0.6,
+    "ai_verified": true,
+    "publication_issues": [],
+    "draft": {
+      "code": "BMW-2",
+      "title": "1975-1984 BMW 3 Series / 5 Series / 6 Series / 7 Series",
+      "decoders": [],
+      "warnings": [
+        "Verify exact part numbers by VIN before ordering.",
+        "Confirm programmer support before connecting to the vehicle."
+      ],
+      "key_remote": {
+        "remote_type": "Key"
+      },
+      "making_key": {
+        "methods": [
+          "Method 1: Check the owner's manual for a dealer-written key code.",
+          "Method 2: Use the BMW Determinator.",
+          "Method 3: If the vehicle has a locking glove-box lock, remove and carefully disassemble that cylinder without letting the tumblers fall out. The glove-box cylinder usually contains 8 of the 10 cuts needed for a master key; impression the remaining two ignition cuts, prep both sides of the key, or use progression for the remaining cuts. The trunk lock can also be picked, impressioned, or disassembled without a working key. When removing the chrome face cap, drill a small centered hole through the stamping instead of forcing a screwdriver between the cap and plug body. Reinstall the cap in a different position and make new stamps in the plug cap. Watch for ball-bearing detents and springs."
+        ],
+        "code_availability": "No codes are listed on any locks."
+      },
+      "field_notes": [
+        "VIN or dealer verification is mentioned; verify fitment before ordering key, fob, or proximity parts.",
+        "Trunk or hatch lock information may help when the door lock does not provide enough usable cuts.",
+        "Airbag or retainer safety language is present; follow safe removal procedure before servicing lock components."
+      ],
+      "programming": {
+        "tools": [
+          {
+            "name": "Determinator",
+            "model": "n/a"
+          },
+          {
+            "name": "Lishi",
+            "model": "n/a"
+          },
+          {
+            "name": "AccuReader",
+            "model": "n/a"
+          },
+          {
+            "name": "EEZ Reader",
+            "model": "n/a"
+          }
+        ],
+        "factory_tool": "BMW Determinator"
+      },
+      "system_type": "Key",
+      "transponder": {
+        "chip": "No transponder",
+        "reusable": "n/a",
+        "transponder_type": "None"
+      },
+      "quick_answer": [
+        "Use the sections below to verify blade, FCC/frequency, programming path, decoder references, and final tests before releasing the vehicle."
+      ],
+      "service_notes": [
+        "Use this system record as the job control sheet: verify vehicle identity, blade data, remote/FCC data, and programmer support before work begins.",
+        "Use the spacing/depth data in the mechanical key section when cutting the blade; do not rely on screenshot tables.",
+        "Dealer or VIN verification is referenced; confirm exact part fitment before ordering.",
+        "If supported by the vehicle, the trunk/hatch cylinder can be used as an alternate decoding source."
+      ],
+      "field_workflow": [
+        {
+          "step": "Confirm vehicle match",
+          "detail": "Verify make, model, year, system code and trim before ordering parts."
+        },
+        {
+          "step": "Verify parts",
+          "detail": "Confirm FCC ID, frequency, button count and part number before programming."
+        },
+        {
+          "step": "Prepare access",
+          "detail": "Use a supported programmer for the exact vehicle."
+        },
+        {
+          "step": "Create mechanical key",
+          "detail": "Use approved blade, spacing, depths and decoder data from this report."
+        },
+        {
+          "step": "Program and test",
+          "detail": "Program the remote/transponder and test every customer-facing function before release."
+        }
+      ],
+      "job_essentials": {
+        "Lishi / decoder": "Check source pages",
+        "Programming path": "Use a supported programmer for the exact vehicle."
+      },
+      "mechanical_key": {
+        "itl": "33",
+        "card": "XF33",
+        "macs": "3",
+        "style": "Double-sided",
+        "depths": {
+          "1": ".327",
+          "2": ".303",
+          "3": ".278",
+          "4": ".255"
+        },
+        "spacing": {
+          "1": ".106",
+          "2": ".189",
+          "3": ".272",
+          "4": ".354",
+          "5": ".437",
+          "6": ".520",
+          "7": ".602",
+          "8": ".685",
+          "9": ".768",
+          "10": ".850"
+        },
+        "air_bags": "No",
+        "start_cut": ".106",
+        "cut_to_cut": ".083",
+        "itl_number": "62",
+        "code_series": "HB 1-5000",
+        "ilco_keyway": "X59",
+        "cutting_setup": {
+          "hpc": "XF33",
+          "itl": "62",
+          "pak_a_punch": "n/a",
+          "curtis_clipper": "n/a"
+        },
+        "ignition_retainer": "Spring"
+      },
+      "source_coverage": [
+        "Source coverage: pages 8-8."
+      ],
+      "troubleshooting": [
+        {
+          "issue": "Vehicle or trim mismatch",
+          "action": "Confirm make, model, year, system code, FCC/frequency, and VIN-based part fitment before ordering or programming."
+        },
+        {
+          "issue": "Part number uncertainty",
+          "action": "Verify the remote or proximity fob by VIN when the source indicates dealer/VIN confirmation."
+        },
+        {
+          "issue": "No usable lock code available",
+          "action": "Decode an accessible lock or remove and decode the cylinder, then cut the mechanical key from the recovered cuts."
+        },
+        {
+          "issue": "Column or lock removal risk",
+          "action": "Follow airbag and retainer safety steps before removing ignition or column components."
+        }
+      ],
+      "technician_checklist": {
+        "Final tests": [
+          "Mechanical key operation",
+          "Remote lock/unlock",
+          "Start authorization",
+          "Trunk/remote start if equipped"
+        ],
+        "Bring to the job": [
+          "Supported programmer",
+          "Correct blade/keyway",
+          "PIN access if required"
+        ],
+        "Verify before ordering": [
+          "VIN-based part number",
+          "FCC ID",
+          "Frequency",
+          "Chip/transponder type"
+        ]
+      },
+      "vehicle_applications": [
+        {
+          "make": "BMW",
+          "model": "3 Series",
+          "year_to": 1984,
+          "year_from": 1975
+        },
+        {
+          "make": "BMW",
+          "model": "5 Series",
+          "year_to": 1984,
+          "year_from": 1975
+        },
+        {
+          "make": "BMW",
+          "model": "6 Series",
+          "year_to": 1984,
+          "year_from": 1978
+        },
+        {
+          "make": "BMW",
+          "model": "7 Series",
+          "year_to": 1984,
+          "year_from": 1978
+        }
+      ]
+    }
+  },
+  {
     "system_code": "DGE-20",
     "source_document": "2021 AutoSmart Domestic US Book.pdf",
     "source_pages": [
@@ -681,66 +1267,36 @@
     "draft": {
       "code": "DGE-20",
       "title": "1995-1997 Dodge Neon",
-      "system_type": "Transponder Key",
-      "vehicle_applications": [
+      "decoders": [
         {
-          "make": "Dodge",
-          "model": "Neon",
-          "year_from": 1995,
-          "year_to": 1997
+          "tool": "Determinator",
+          "reference": "CHR 1"
+        },
+        {
+          "tool": "Lishi",
+          "reference": "CY24"
+        },
+        {
+          "tool": "AccuReader",
+          "reference": "CHRY 8"
+        },
+        {
+          "tool": "EEZ Reader",
+          "reference": "Y154"
+        },
+        {
+          "tool": "Cobra",
+          "reference": "KDC8"
         }
       ],
-      "job_essentials": {
-        "Code series": "L0001-3580",
-        "Lishi / decoder": "EEZ Reader: Yi54 Cobra; Cobra: KDC8",
-        "Programming path": "Use a supported programmer for the exact vehicle."
-      },
-      "quick_answer": [
-        "Use the sections below to verify blade, FCC/frequency, programming path, decoder references, and final tests before releasing the vehicle."
+      "warnings": [
+        "Verify exact part numbers by VIN before ordering.",
+        "Confirm programmer support before connecting to the vehicle."
       ],
       "key_remote": {
         "remote_type": "Key"
       },
-      "mechanical_key": {
-        "code_series": "L0001-3580",
-        "ilco_keyway": "Y157 / Y159 / CY24",
-        "depths": {
-          "1": ".340",
-          "2": ".315",
-          "3": ".290",
-          "4": ".265"
-        },
-        "cutting_setup": {
-          "curtis_clipper": "Cam CHRY-4, carriage CHRY-4B",
-          "pak_a_punch": "PAK-C2",
-          "framon": "Use Ford 5-pin clip and set first cut at .052"
-        },
-        "start_cut": ".052",
-        "macs": "2",
-        "ignition_retainer": "Active",
-        "cut_to_cut": ".092",
-        "style": "Double-sided",
-        "air_bags": "Yes",
-        "card": "CX60",
-        "itl_number": "515",
-        "spacing": {
-          "1": ".849",
-          "2": ".757",
-          "3": ".665",
-          "4": ".573",
-          "5": ".481",
-          "6": ".389",
-          "7": ".297"
-        }
-      },
-      "transponder": {
-        "transponder_type": "None",
-        "chip": "No transponder",
-        "reusable": "n/a",
-        "test_key": "Not specified"
-      },
       "making_key": {
-        "code_availability": "No codes are listed on any locks.",
         "methods": [
           "Method 1: Use a Lock Decoder/Reader tool to decode the door lock for positions 1 through 7; those cuts are enough for a complete key.",
           "Method 2: Use tryout keys, Baxter Systems set 84B or 97, or Aero Lock set TO-73.",
@@ -767,7 +1323,8 @@
             "step": "Program and test",
             "detail": "Program the remote/transponder and test every customer-facing function before release."
           }
-        ]
+        ],
+        "code_availability": "No codes are listed on any locks."
       },
       "field_notes": [
         "VIN or dealer verification is mentioned; verify fitment before ordering key, fob, or proximity parts.",
@@ -776,6 +1333,32 @@
         "Trunk or hatch lock information may help when the door lock does not provide enough usable cuts.",
         "Airbag or retainer safety language is present; follow safe removal procedure before servicing lock components."
       ],
+      "programming": {
+        "cloning": "Not specified",
+        "factory_tool": "Not specified",
+        "pin_guidance": "Not specified",
+        "tool_guidance": "Not specified",
+        "system_requirement": "Not specified"
+      },
+      "system_type": "Transponder Key",
+      "transponder": {
+        "chip": "No transponder",
+        "reusable": "n/a",
+        "test_key": "Not specified",
+        "transponder_type": "None"
+      },
+      "quick_answer": [
+        "Use the sections below to verify blade, FCC/frequency, programming path, decoder references, and final tests before releasing the vehicle."
+      ],
+      "source_facts": {
+        "Code series": [
+          "L0001-3580"
+        ],
+        "Blades / keyways": [
+          "Cy24",
+          "Y15"
+        ]
+      },
       "service_notes": [
         "Use this system record as the job control sheet: verify vehicle identity, blade data, remote/FCC data, and programmer support before work begins.",
         "Mechanical key work should use the listed code series: L0001-3580.",
@@ -784,55 +1367,45 @@
         "When all keys are lost, decode the door lock/cylinder or use the listed lock reader path to recover cuts.",
         "If supported by the vehicle, the trunk/hatch cylinder can be used as an alternate decoding source."
       ],
-      "technician_checklist": {
-        "Bring to the job": [
-          "Supported programmer",
-          "Correct blade/keyway",
-          "PIN access if required"
-        ],
-        "Verify before ordering": [
-          "VIN-based part number",
-          "FCC ID",
-          "Frequency",
-          "Chip/transponder type"
-        ],
-        "Final tests": [
-          "Mechanical key operation",
-          "Remote lock/unlock",
-          "Start authorization",
-          "Trunk/remote start if equipped"
-        ]
+      "job_essentials": {
+        "Code series": "L0001-3580",
+        "Lishi / decoder": "EEZ Reader: Yi54 Cobra; Cobra: KDC8",
+        "Programming path": "Use a supported programmer for the exact vehicle."
       },
-      "source_facts": {
-        "Blades / keyways": [
-          "Cy24",
-          "Y15"
-        ],
-        "Code series": [
-          "L0001-3580"
-        ]
+      "mechanical_key": {
+        "card": "CX60",
+        "macs": "2",
+        "style": "Double-sided",
+        "depths": {
+          "1": ".340",
+          "2": ".315",
+          "3": ".290",
+          "4": ".265"
+        },
+        "spacing": {
+          "1": ".849",
+          "2": ".757",
+          "3": ".665",
+          "4": ".573",
+          "5": ".481",
+          "6": ".389",
+          "7": ".297"
+        },
+        "air_bags": "Yes",
+        "start_cut": ".052",
+        "cut_to_cut": ".092",
+        "itl_number": "515",
+        "code_series": "L0001-3580",
+        "ilco_keyway": "Y157 / Y159 / CY24",
+        "cutting_setup": {
+          "framon": "Use Ford 5-pin clip and set first cut at .052",
+          "pak_a_punch": "PAK-C2",
+          "curtis_clipper": "Cam CHRY-4, carriage CHRY-4B"
+        },
+        "ignition_retainer": "Active"
       },
-      "decoders": [
-        {
-          "tool": "Determinator",
-          "reference": "CHR 1"
-        },
-        {
-          "tool": "Lishi",
-          "reference": "CY24"
-        },
-        {
-          "tool": "AccuReader",
-          "reference": "CHRY 8"
-        },
-        {
-          "tool": "EEZ Reader",
-          "reference": "Y154"
-        },
-        {
-          "tool": "Cobra",
-          "reference": "KDC8"
-        }
+      "source_coverage": [
+        "Source coverage: pages 91-91."
       ],
       "troubleshooting": [
         {
@@ -852,37 +1425,12 @@
           "action": "Follow airbag and retainer safety steps before removing ignition or column components."
         }
       ],
-      "warnings": [
-        "Verify exact part numbers by VIN before ordering.",
-        "Confirm programmer support before connecting to the vehicle."
-      ],
-      "source_coverage": [
-        "Source coverage: pages 91-91."
-      ],
-      "programming": {
-        "tool_guidance": "Not specified",
-        "pin_guidance": "Not specified",
-        "system_requirement": "Not specified",
-        "factory_tool": "Not specified",
-        "cloning": "Not specified"
-      },
       "procedure_diagrams": [
         {
           "title": "Y157/Y159 lock-position guide",
-          "placement": "making_key",
-          "caption": "Original redrawn lock-position map for 1995-97 Dodge Neon.",
           "panels": [
             {
-              "label": "Lock positions",
-              "columns": [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7"
-              ],
+              "note": "Glove-box positions are listed as none in the source map.",
               "rows": [
                 [
                   "Ignition",
@@ -925,9 +1473,493 @@
                   ""
                 ]
               ],
-              "note": "Glove-box positions are listed as none in the source map."
+              "label": "Lock positions",
+              "columns": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7"
+              ]
             }
-          ]
+          ],
+          "caption": "Original redrawn lock-position map for 1995-97 Dodge Neon.",
+          "placement": "making_key"
+        }
+      ],
+      "technician_checklist": {
+        "Final tests": [
+          "Mechanical key operation",
+          "Remote lock/unlock",
+          "Start authorization",
+          "Trunk/remote start if equipped"
+        ],
+        "Bring to the job": [
+          "Supported programmer",
+          "Correct blade/keyway",
+          "PIN access if required"
+        ],
+        "Verify before ordering": [
+          "VIN-based part number",
+          "FCC ID",
+          "Frequency",
+          "Chip/transponder type"
+        ]
+      },
+      "vehicle_applications": [
+        {
+          "make": "Dodge",
+          "model": "Neon",
+          "year_to": 1997,
+          "year_from": 1995
+        }
+      ]
+    }
+  },
+  {
+    "system_code": "GM-P10",
+    "source_document": "2021 AutoSmart Domestic US Book.pdf",
+    "source_pages": [
+      522,
+      523
+    ],
+    "confidence": 0.6,
+    "ai_verified": true,
+    "publication_issues": [],
+    "draft": {
+      "code": "GM-P10",
+      "title": "2015-2020 Cadillac Escalade / SRX",
+      "decoders": [
+        {
+          "tool": "Lishi",
+          "reference": "HU100"
+        }
+      ],
+      "warnings": [
+        "Verify exact part numbers by VIN before ordering.",
+        "Confirm programmer support before connecting to the vehicle."
+      ],
+      "key_remote": {
+        "frequency": "315 MHz, 433 MHz",
+        "remote_type": "Proximity fob",
+        "known_options": [
+          {
+            "part": "13580812",
+            "fcc_id": "HYO2AB",
+            "buttons": "6",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "12598511",
+            "years": "2016-20",
+            "fcc_id": "HYQ2AB",
+            "buttons": "6"
+          },
+          {
+            "part": "13598525",
+            "fcc_id": "HYQ2AB",
+            "buttons": "3",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "13598526",
+            "fcc_id": "HYQ2AB",
+            "buttons": "5",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "13510246",
+            "fcc_id": "HYQ2EB",
+            "frequency": "433 MHz"
+          },
+          {
+            "part": "13510245",
+            "fcc_id": "HYQ2EB",
+            "frequency": "433 MHz"
+          },
+          {
+            "part": "13580794",
+            "fcc_id": "HYQ2EB",
+            "buttons": "6",
+            "frequency": "433 MHz"
+          },
+          {
+            "part": "13510245",
+            "buttons": "6",
+            "frequency": "433 MHz"
+          },
+          {
+            "part": "19598506",
+            "fcc_id": "HYQ2AB",
+            "buttons": "4",
+            "frequency": "315 MHz"
+          },
+          {
+            "part": "13510254",
+            "fcc_id": "HYQ2AB",
+            "buttons": "5",
+            "frequency": "315 MHz"
+          }
+        ]
+      },
+      "lock_parts": [
+        {
+          "years": "2015-20",
+          "models": "Escalade",
+          "door_lock": "7022907 / 7022908 coded",
+          "trunk_lock": "7023874 tailgate, uncoded",
+          "ignition_lock": "n/a"
+        },
+        {
+          "years": "2015-16",
+          "models": "SRX",
+          "door_lock": "7016321 uncoded",
+          "trunk_lock": "n/a",
+          "ignition_lock": "n/a"
+        },
+        {
+          "years": "2019-21",
+          "models": "XT4",
+          "pin_kit": "7023068",
+          "door_lock": "No listing from Strattec",
+          "trunk_lock": "No listing from Strattec",
+          "ignition_lock": "No listing from Strattec"
+        },
+        {
+          "years": "2017-19",
+          "models": "XT5",
+          "door_lock": "7022907 / 7022908 coded",
+          "trunk_lock": "n/a",
+          "ignition_lock": "n/a"
+        },
+        {
+          "years": "2015-19",
+          "models": "XTS",
+          "door_lock": "7022907 / 7022908 coded",
+          "trunk_lock": "n/a",
+          "ignition_lock": "n/a"
+        }
+      ],
+      "making_key": {
+        "methods": [
+          "Try to obtain the key code from a GM dealer.",
+          "Use a Lock Decoder/Reader tool to decode the door lock.",
+          "If decoding in place is not practical, remove the door cylinder, disassemble it, and decode the wafers for a working key."
+        ],
+        "field_notes": [
+          "Match FCC ID, frequency, button count, and part number before programming or selling a remote.",
+          "VIN or dealer verification is mentioned; verify fitment before ordering key, fob, or proximity parts.",
+          "Door lock/cylinder information is relevant for making a working mechanical key.",
+          "Airbag or retainer safety language is present; follow safe removal procedure before servicing lock components."
+        ],
+        "service_notes": [
+          "Use this system record as the job control sheet: verify vehicle identity, blade data, remote/FCC data, and programmer support before work begins.",
+          "For remote or proximity systems, verify FCC ID, frequency, button count, and part number before programming.",
+          "Check the transponder/chip section before choosing a reusable, clone, or program-new workflow.",
+          "Dealer or VIN verification is referenced; confirm exact part fitment before ordering.",
+          "Lock part availability is mentioned; verify lock, cylinder, and pin-kit information before parts ordering."
+        ],
+        "field_workflow": [
+          {
+            "step": "Confirm vehicle match",
+            "detail": "Verify make, model, year, system code and trim before ordering parts."
+          },
+          {
+            "step": "Verify parts",
+            "detail": "Confirm FCC ID, frequency, button count and part number before programming."
+          },
+          {
+            "step": "Prepare access",
+            "detail": "Use a supported programmer for the exact vehicle."
+          },
+          {
+            "step": "Create mechanical key",
+            "detail": "Use approved blade, spacing, depths and decoder data from this report."
+          },
+          {
+            "step": "Program and test",
+            "detail": "Program the remote/transponder and test every customer-facing function before release."
+          }
+        ],
+        "code_availability": "No codes are listed on the vehicle locks."
+      },
+      "programming": {
+        "tools": [
+          {
+            "name": "TCODE / MVP Pro",
+            "status": "Not supported"
+          },
+          {
+            "name": "TDB1000",
+            "status": "Check support"
+          },
+          {
+            "name": "Hotwire",
+            "status": "Check support"
+          },
+          {
+            "name": "Smart Pro",
+            "status": "Check support"
+          },
+          {
+            "name": "Auto Pro Pad",
+            "status": "Check support"
+          },
+          {
+            "name": "Autel IM608",
+            "status": "Not supported"
+          }
+        ],
+        "cloning": "No Cloning for this Proximity System",
+        "factory_tool": "Tech2 or J2534 with subscription",
+        "pin_required": "Yes",
+        "tool_guidance": "Check the programmer supplier before connecting; support varies by tool and model year.",
+        "system_requirement": "US models usually support on-board key programming; confirm the GM on-board programming chart for the exact vehicle."
+      },
+      "system_type": "Proximity / Smart Key",
+      "transponder": {
+        "chip": "Integrated Circuit Board",
+        "cloning": "No cloning is listed for this proximity system.",
+        "reusable": "No",
+        "test_key": "HU100",
+        "transponder_type": "Proximity"
+      },
+      "quick_answer": [
+        "Use the sections below to verify blade, FCC/frequency, programming path, decoder references, and final tests before releasing the vehicle."
+      ],
+      "source_facts": {
+        "FCC IDs": [
+          "HYO2AB",
+          "HYQ2AB",
+          "HYQ2EB"
+        ],
+        "Frequencies": [
+          "315 MHz",
+          "433 MHz"
+        ],
+        "Part numbers": [
+          "12598511",
+          "13510242",
+          "13510245",
+          "13510246",
+          "13510254",
+          "13580794",
+          "13580812",
+          "13598506",
+          "13598525",
+          "13598526",
+          "13598528",
+          "19510245",
+          "19598506",
+          "5922070"
+        ],
+        "Blades / keyways": [
+          "PRX-CAD-3B1",
+          "PRX-CAD-584",
+          "PRX-CAD-5B3",
+          "PRX-CAD-5B4",
+          "PRX-CAD-5B5",
+          "PRX-CAD-6B2",
+          "PRX-CAD-AB1"
+        ]
+      },
+      "job_essentials": {
+        "Frequency": "315 MHz, 433 MHz",
+        "Lishi / decoder": "Check source pages",
+        "Programming path": "Use a supported programmer for the exact vehicle.",
+        "Emergency blade / keyway": "5922070"
+      },
+      "mechanical_key": {
+        "itl": "020",
+        "card": "n/a",
+        "macs": "3",
+        "style": "High Security",
+        "depths": {
+          "1": "0.115",
+          "2": "0.095",
+          "3": "0.075",
+          "4": "0.055"
+        },
+        "milling": "2-track internal high-security key",
+        "spacing": {
+          "1": "1.098",
+          "2": "0.992",
+          "3": "0.886",
+          "4": "0.780",
+          "5": "0.673",
+          "6": "0.567",
+          "7": "0.461",
+          "8": "0.354",
+          "9": "0.248",
+          "10": "0.142"
+        },
+        "air_bags": "Yes",
+        "test_key": "HU100",
+        "start_cut": "n/a",
+        "cut_to_cut": "Varies",
+        "itl_number": "n/a",
+        "code_series": "V001-V5718",
+        "ilco_keyway": "HU100 / Strattec 5922070 emergency key",
+        "cutting_setup": {
+          "Curtis Clipper": "Mentioned in source; verify exact setup on source page during review."
+        },
+        "ignition_retainer": "None"
+      },
+      "source_coverage": [
+        "Source coverage: pages 522-522."
+      ],
+      "troubleshooting": [
+        {
+          "issue": "Vehicle or trim mismatch",
+          "action": "Confirm make, model, year, system code, FCC/frequency, and VIN-based part fitment before ordering or programming."
+        },
+        {
+          "issue": "Part number uncertainty",
+          "action": "Verify the remote or proximity fob by VIN when the source indicates dealer/VIN confirmation."
+        },
+        {
+          "issue": "Column or lock removal risk",
+          "action": "Follow airbag and retainer safety steps before removing ignition or column components."
+        }
+      ],
+      "procedure_diagrams": [
+        {
+          "title": "5922070 lock-position guide",
+          "panels": [
+            {
+              "note": "Read columns from bow/handle to tip. Rows represent the locks listed in the source map.",
+              "rows": [
+                [
+                  "Ignition",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "Doors",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "Trunk",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "Spare tire",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "Stowage",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ],
+                [
+                  "Glove box",
+                  "filled",
+                  "filled",
+                  "filled",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              ],
+              "label": "Lock positions",
+              "columns": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "10"
+              ]
+            }
+          ],
+          "caption": "Original redrawn lock-position map showing which cut positions are used by each lock group.",
+          "placement": "making_key"
+        }
+      ],
+      "technician_checklist": {
+        "Final tests": [
+          "Mechanical key operation",
+          "Remote lock/unlock",
+          "Start authorization",
+          "Trunk/remote start if equipped"
+        ],
+        "Bring to the job": [
+          "Supported programmer",
+          "Correct blade/keyway",
+          "PIN access if required"
+        ],
+        "Verify before ordering": [
+          "VIN-based part number",
+          "FCC ID",
+          "Frequency",
+          "Chip/transponder type"
+        ]
+      },
+      "vehicle_applications": [
+        {
+          "make": "Cadillac",
+          "model": "Escalade",
+          "year_to": 2020,
+          "year_from": 2015
+        },
+        {
+          "make": "Cadillac",
+          "model": "SRX",
+          "year_to": 2016,
+          "year_from": 2015
         }
       ]
     }

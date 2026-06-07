@@ -104,7 +104,9 @@ def export_published_report_seed(path: Path | None = None) -> Path:
         ).fetchall()
     for row in status_rows:
         code = str(row["system_code"] or "")
-        if code and (row["status"] != "published" or row["publication_issues"]):
+        issues = row["publication_issues"] or []
+        only_waiting = bool(issues) and all("Awaiting AI verification" in str(issue) for issue in issues)
+        if code and row["status"] == "rejected" and not only_waiting:
             blocked_codes.add(code)
     if destination.exists():
         try:
