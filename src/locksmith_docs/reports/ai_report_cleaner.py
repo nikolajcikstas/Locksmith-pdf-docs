@@ -1862,11 +1862,14 @@ def merge_common_av10_source_facts(draft: dict[str, Any], source_text: str) -> d
     merged["title"] = "2017-2021 Audi A4 / A5 / A6 / A7 / A8 / Q5 / Q7 / Q8 / TT"
     merged["system_type"] = "Proximity / Smart Key"
     merged["vehicle_applications"] = [
-        {"make": "Audi", "model": "A4 / S4", "year_from": 2017, "year_to": 2021},
+        {"make": "Audi", "model": "A4", "year_from": 2017, "year_to": 2021},
+        {"make": "Audi", "model": "S4", "year_from": 2017, "year_to": 2021},
         {"make": "Audi", "model": "A5", "year_from": 2018, "year_to": 2021},
-        {"make": "Audi", "model": "A6 / S6", "year_from": 2019, "year_to": 2021},
+        {"make": "Audi", "model": "A6", "year_from": 2019, "year_to": 2021},
+        {"make": "Audi", "model": "S6", "year_from": 2019, "year_to": 2021},
         {"make": "Audi", "model": "A7", "year_from": 2019, "year_to": 2021},
-        {"make": "Audi", "model": "A8 / S8", "year_from": 2019, "year_to": 2021},
+        {"make": "Audi", "model": "A8", "year_from": 2019, "year_to": 2021},
+        {"make": "Audi", "model": "S8", "year_from": 2019, "year_to": 2021},
         {"make": "Audi", "model": "Q5", "year_from": 2018, "year_to": 2021},
         {"make": "Audi", "model": "Q7", "year_from": 2017, "year_to": 2021},
         {"make": "Audi", "model": "Q8", "year_from": 2019, "year_to": 2021},

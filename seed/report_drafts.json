@@ -15,6 +15,12 @@
       "vehicle_applications": [
         {
           "make": "Audi",
+          "model": "A4",
+          "year_from": 2017,
+          "year_to": 2021
+        },
+        {
+          "make": "Audi",
           "model": "A4 / S4",
           "year_from": 2017,
           "year_to": 2021
@@ -27,6 +33,12 @@
         },
         {
           "make": "Audi",
+          "model": "A6",
+          "year_from": 2019,
+          "year_to": 2021
+        },
+        {
+          "make": "Audi",
           "model": "A6 / S6",
           "year_from": 2019,
           "year_to": 2021
@@ -34,6 +46,12 @@
         {
           "make": "Audi",
           "model": "A7",
+          "year_from": 2019,
+          "year_to": 2021
+        },
+        {
+          "make": "Audi",
+          "model": "A8",
           "year_from": 2019,
           "year_to": 2021
         },
@@ -294,7 +312,7 @@
           "reference": "HU162"
         }
       ],
-      "title": "2016-2021 Audi A4 / S4 / A5 / A6 / S6 / A7 +"
+      "title": "2016-2021 Audi A4 / A4 / S4 / A5 / A6 +"
     }
   },
   {
