@@ -1,5 +1,303 @@
 [
   {
+    "system_code": "AV-10",
+    "source_document": "Audi-VW-Porsche.pdf",
+    "source_pages": [
+      22,
+      23
+    ],
+    "confidence": 0.6,
+    "ai_verified": true,
+    "publication_issues": [],
+    "draft": {
+      "code": "AV-10",
+      "system_type": "Proximity / Smart Key",
+      "vehicle_applications": [
+        {
+          "make": "Audi",
+          "model": "A4 / S4",
+          "year_from": 2017,
+          "year_to": 2021
+        },
+        {
+          "make": "Audi",
+          "model": "A5",
+          "year_from": 2018,
+          "year_to": 2021
+        },
+        {
+          "make": "Audi",
+          "model": "A6 / S6",
+          "year_from": 2019,
+          "year_to": 2021
+        },
+        {
+          "make": "Audi",
+          "model": "A7",
+          "year_from": 2019,
+          "year_to": 2021
+        },
+        {
+          "make": "Audi",
+          "model": "A8 / S8",
+          "year_from": 2019,
+          "year_to": 2021
+        },
+        {
+          "make": "Audi",
+          "model": "Q5",
+          "year_from": 2018,
+          "year_to": 2021
+        },
+        {
+          "make": "Audi",
+          "model": "Q7",
+          "year_from": 2017,
+          "year_to": 2021
+        },
+        {
+          "make": "Audi",
+          "model": "Q8",
+          "year_from": 2019,
+          "year_to": 2021
+        },
+        {
+          "make": "Audi",
+          "model": "TT",
+          "year_from": 2016,
+          "year_to": 2021
+        }
+      ],
+      "job_essentials": {
+        "Lishi / decoder": "Check source pages",
+        "Frequency": "433 MHz",
+        "Chip / transponder": "Integrated Circuit",
+        "PIN": "Required",
+        "Programming path": "Use a supported programmer for the exact vehicle. PIN access is required or mentioned."
+      },
+      "quick_answer": [
+        "This Audi AV-10 group uses a proximity system and requires a specialized key programmer or EEPROM-capable workflow.",
+        "A PIN is required, but the source notes that the dealer does not provide PIN access. Some aftermarket tools may read the PIN, but success is not guaranteed.",
+        "Verify the exact remote part number and emergency blade by VIN before ordering."
+      ],
+      "key_remote": {
+        "remote_type": "Proximity fob",
+        "frequency": "433 MHz",
+        "known_options": [
+          {
+            "years": "2017-21",
+            "models": "A4 / S4",
+            "part": "4M0 959 754 AK",
+            "fcc_id": "IYZ-AK01",
+            "frequency": "433 MHz",
+            "emergency_blade": "4M0 837 216 A"
+          },
+          {
+            "years": "2019-21",
+            "models": "A6 / S6",
+            "part": "4N0 959 754 K",
+            "fcc_id": "IYZ-AK01",
+            "frequency": "433 MHz",
+            "emergency_blade": "4N0 837 216"
+          },
+          {
+            "years": "2016-21",
+            "models": "TT",
+            "part": "8S0 959 754 AL",
+            "fcc_id": "IYZ-AK01",
+            "frequency": "433 MHz",
+            "emergency_blade": "4M0 837 216 A"
+          }
+        ]
+      },
+      "transponder": {
+        "transponder_type": "Standard proximity transponder",
+        "chip": "Integrated circuit",
+        "reusable": "No",
+        "cloning": "No cloning for this proximity system."
+      },
+      "programming": {
+        "pin_required": "Yes",
+        "factory_tool": "Factory/subscription tool path listed; specialized key programmer or EEPROM equipment may be required.",
+        "cloning": "No cloning for this system.",
+        "tools": [
+          {
+            "name": "TCODE / MVP Pro",
+            "status": "Check support"
+          },
+          {
+            "name": "TDB1000",
+            "status": "Check support"
+          },
+          {
+            "name": "Hotwire",
+            "status": "Check support"
+          },
+          {
+            "name": "Smart Pro",
+            "status": "Check support"
+          },
+          {
+            "name": "AutoProPad",
+            "status": "Check support"
+          },
+          {
+            "name": "Autel IM608",
+            "status": "Check support"
+          }
+        ],
+        "pin_guidance": "PIN is required. The source states that the dealer does not have PIN access; aftermarket programmers may be able to read it, but this is not always possible.",
+        "tool_guidance": "Check support with the programmer supplier before starting. Some tools work well on this group and some do not."
+      },
+      "making_key": {
+        "code_availability": "No codes are listed on any locks.",
+        "methods": [
+          "Method 1: Use a lock reader/decoder in the door lock to determine the cuts for a complete key.",
+          "Method 2: Remove and disassemble the door cylinder, then decode the tumblers when in-place decoding is not practical.",
+          "Use the exact emergency blade and keyway confirmed by VIN before cutting; this group has multiple Audi/VW internal-milled keyway variations."
+        ],
+        "field_workflow": [
+          {
+            "step": "Confirm vehicle match",
+            "detail": "Verify make, model, year, system code and trim before ordering parts."
+          },
+          {
+            "step": "Verify parts",
+            "detail": "Confirm FCC ID, frequency, button count and part number before programming."
+          },
+          {
+            "step": "Prepare access",
+            "detail": "Use a supported programmer for the exact vehicle. PIN access is required or mentioned."
+          },
+          {
+            "step": "Create mechanical key",
+            "detail": "Use approved blade, spacing, depths and decoder data from this report."
+          },
+          {
+            "step": "Program and test",
+            "detail": "Program the remote/transponder and test every customer-facing function before release."
+          }
+        ],
+        "field_notes": [
+          "Match FCC ID, frequency, button count, and part number before programming or selling a remote.",
+          "PIN access is mentioned for this system; confirm the PIN workflow before connecting a programmer.",
+          "VIN or dealer verification is mentioned; verify fitment before ordering key, fob, or proximity parts.",
+          "A lock reader/decoder path is available or referenced; use the listed decoder data before removing parts.",
+          "Door lock/cylinder information is relevant for making a working mechanical key.",
+          "No-cloning language is present; plan to program the key/fob rather than clone it.",
+          "Reusable status is mentioned; verify whether used keys/fobs are allowed for this system.",
+          "Airbag or retainer safety language is present; follow safe removal procedure before servicing lock components."
+        ],
+        "service_notes": [
+          "Use this system record as the job control sheet: verify vehicle identity, blade data, remote/FCC data, and programmer support before work begins.",
+          "Use the spacing/depth data in the mechanical key section when cutting the blade; do not rely on screenshot tables.",
+          "For remote or proximity systems, verify FCC ID, frequency, button count, and part number before programming.",
+          "Check the transponder/chip section before choosing a reusable, clone, or program-new workflow.",
+          "PIN access is required or referenced; confirm the PIN source and programmer support before attempting programming.",
+          "The source indicates no cloning for this system; use a programming workflow instead of cloning.",
+          "Dealer or VIN verification is referenced; confirm exact part fitment before ordering.",
+          "When all keys are lost, decode the door lock/cylinder or use the listed lock reader path to recover cuts."
+        ]
+      },
+      "technician_checklist": {
+        "Bring to the job": [
+          "Supported programmer",
+          "Correct blade/keyway",
+          "PIN access if required"
+        ],
+        "Verify before ordering": [
+          "VIN-based part number",
+          "FCC ID",
+          "Frequency",
+          "Chip/transponder type"
+        ],
+        "Final tests": [
+          "Mechanical key operation",
+          "Remote lock/unlock",
+          "Start authorization",
+          "Trunk/remote start if equipped"
+        ]
+      },
+      "source_facts": {
+        "FCC IDs": [
+          "IYZ-AKO1"
+        ],
+        "Frequencies": [
+          "433MHZ"
+        ],
+        "Programming tools": [
+          "TCODE",
+          "MVP",
+          "TDB1000",
+          "Hotwire",
+          "Autel",
+          "IM608"
+        ]
+      },
+      "troubleshooting": [
+        {
+          "issue": "Vehicle or trim mismatch",
+          "action": "Confirm make, model, year, system code, FCC/frequency, and VIN-based part fitment before ordering or programming."
+        },
+        {
+          "issue": "PIN access required",
+          "action": "Obtain or calculate the correct PIN before programming; stop if the tool cannot support the PIN workflow for this vehicle."
+        },
+        {
+          "issue": "Part number uncertainty",
+          "action": "Verify the remote or proximity fob by VIN when the source indicates dealer/VIN confirmation."
+        },
+        {
+          "issue": "No usable lock code available",
+          "action": "Decode an accessible lock or remove and decode the cylinder, then cut the mechanical key from the recovered cuts."
+        },
+        {
+          "issue": "Used remote or chip may fail",
+          "action": "Check reusable status before selling or programming a used fob/transponder."
+        },
+        {
+          "issue": "Column or lock removal risk",
+          "action": "Follow airbag and retainer safety steps before removing ignition or column components."
+        }
+      ],
+      "warnings": [
+        "Verify exact part numbers by VIN before ordering.",
+        "Confirm programmer support before connecting to the vehicle.",
+        "Verify part number, emergency blade, FCC ID, and frequency by VIN before ordering.",
+        "PIN access is not dealer-supplied in the source notes; confirm programmer capability before connecting.",
+        "No cloning is listed for this proximity system."
+      ],
+      "source_coverage": [
+        "Source coverage: pages 22-23."
+      ],
+      "mechanical_key": {
+        "cutting_setup": {
+          "type_1": "8 internal center cuts with a corresponding edge cut.",
+          "type_2": "9 internal center cuts with 3 corresponding edge cuts.",
+          "type_3": "10 internal center cuts with 4 corresponding edge cuts.",
+          "edge_track": "The source calls out an edge-track example and notes that the keyway appears on proximity vehicles in this group."
+        },
+        "code_series": "Unknown / dealer or tool lookup required",
+        "style": "Internal-milled Audi/VW Type 1/2/3 family; verify exact keyway by VIN",
+        "card": "HU162 family",
+        "itl_number": "9",
+        "ilco_keyway": "HU162 family / emergency blade by VIN",
+        "macs": "8",
+        "start_cut": "n/a",
+        "cut_to_cut": ".201",
+        "air_bags": "Yes",
+        "ignition_retainer": "n/a"
+      },
+      "decoders": [
+        {
+          "tool": "Lishi",
+          "reference": "HU162"
+        }
+      ],
+      "title": "2016-2021 Audi A4 / S4 / A5 / A6 / S6 / A7 +"
+    }
+  },
+  {
     "system_code": "AV-24",
     "source_document": "Audi-VW-Porsche.pdf",
     "source_pages": [
